@@ -1,0 +1,74 @@
+{
+    "adjust_pos_weight": false,
+    "batch_size": 48,
+    "cuda": true,
+    "data_aug": 0.5,
+    "dataset_path": "dataset/finetune_36_01-04-20.json",
+    "datetime": "2020-07-02T12:49:30",
+    "dry_run": false,
+    "epochs": 100,
+    "estopper": {
+        "patience": 10,
+        "threshold": 1.0
+    },
+    "finetune-samples": 36,
+    "finetuned-model": "/home-local/Multilabel-Proteins-Malaria/Results/2020-05-11T07:25:41_size256_step192_epochs1200_bsize64_dataaug0.5_lr0.0001_adjposweiFalse_numclasses1",
+    "freeze_layers": [
+        "1a",
+        "1b",
+        "2a",
+        "2b",
+        "3a",
+        "3b"
+    ],
+    "hdf5_params": {
+        "drop_last": false,
+        "hdf5_testing_path": null,
+        "hdf5_training_path": null,
+        "hdf5_validation_path": null,
+        "load_data": true,
+        "num_workers": 4,
+        "pin_memory": true,
+        "shuffle": true,
+        "use": false
+    },
+    "image_max": [
+        255.0,
+        255.0,
+        255.0
+    ],
+    "image_min": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "k-folds": 3,
+    "len_dataset": 36,
+    "len_training": null,
+    "len_validation": null,
+    "lr": 1e-06,
+    "num_classes": 1,
+    "num_input_images": 3,
+    "omit_transforms": [
+        "periodical_transform",
+        "rotation90",
+        "gamma_adaptation",
+        "elastic_transform"
+    ],
+    "pos_weight": [
+        1.0
+    ],
+    "savefolder": "/home-local/Multilabel-Proteins-Malaria/Finetune",
+    "scheduler": {
+        "factor": 0.5,
+        "min_lr": 1e-05,
+        "patience": 50,
+        "threshold": 0.01,
+        "verbose": true
+    },
+    "size": 256,
+    "step": 192,
+    "testing_path": null,
+    "training_path": null,
+    "validation_path": null
+}

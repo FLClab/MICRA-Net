@@ -1,0 +1,52 @@
+{
+    "adjust_pos_weight": false,
+    "batch_size": 16,
+    "cuda": true,
+    "data_aug": 0.5,
+    "datetime": "2020-04-30T20:48:52",
+    "dry_run": false,
+    "epochs": 600,
+    "estopper": {
+        "patience": 10,
+        "threshold": 1.0
+    },
+    "hdf5_params": {
+        "drop_last": true,
+        "hdf5_testing_path": "/home-local/Multilabel-Proteins-EM/dataset/testing_5_02-04-20.hdf5",
+        "hdf5_training_path": "/home-local/Multilabel-Proteins-EM/dataset/training_5_02-04-20.hdf5",
+        "hdf5_validation_path": "/home-local/Multilabel-Proteins-EM/dataset/validation_5_02-04-20.hdf5",
+        "load_data": true,
+        "num_workers": 4,
+        "pin_memory": true,
+        "shuffle": true,
+        "use": true
+    },
+    "image_max": 254.0,
+    "image_min": 1.0,
+    "len_training": 90,
+    "len_validation": 66,
+    "lr": 0.0001,
+    "num_classes": 1,
+    "num_input_images": 1,
+    "omit_transforms": [
+        "periodical_transform",
+        "rotation90"
+    ],
+    "pos_weight": [
+        5
+    ],
+    "savefolder": "/home-local/Multilabel-Proteins-EM/Results",
+    "scheduler": {
+        "gamma": 0.5,
+        "milestones": [
+            50,
+            200,
+            300
+        ]
+    },
+    "size": 512,
+    "step": null,
+    "testing_path": "dataset/testing_13-02-20.json",
+    "training_path": "dataset/training_13-02-20.json",
+    "validation_path": "dataset/validation_13-02-20.json"
+}

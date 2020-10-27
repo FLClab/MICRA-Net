@@ -1,0 +1,10 @@
+{
+    "batch_size": 64,
+    "depth": 4,
+    "epochs": 150,
+    "in_channels": 1,
+    "lr": 0.001,
+    "number_filter": 4,
+    "out_channels": 11,
+    "size": 256
+}
