@@ -4,17 +4,11 @@ import torch
 
 from torch import nn
 
-
 class MICRANet(nn.Module):
-    """Class for creating the UNet architecture. A first 2d convolution is done
-    on the input image then the contracting path is created with a given depth and
-    a set number of filter. The number of filter is doubled at every step.
+    """
+    Class for creating the `MICRANet` architecture
 
-    :param in_channels: Number of channels in the input image
-    :param out_channels: Number of output channels from the UNet
-    :param number_filter: Number of filters in the first layer (2 ** number_filter)
-    :param depth: Depth of the network
-    :param size: The size of the crops that are fed to the network
+    :param grad: (optional) Wheter the gradient should be calculated
     """
     def __init__(self, grad=False, **kwargs):
         super(MICRANet, self).__init__()
@@ -22,7 +16,7 @@ class MICRANet(nn.Module):
 
         self.maxpool = nn.MaxPool2d(kernel_size=2)
 
-        self.conv1a = nn.Conv2d(in_channels=kwargs["in_channels"], out_channels=32, kernel_size=3, padding=1)
+        self.conv1a = nn.Conv2d(in_channels=kwargs["num_input_images"], out_channels=32, kernel_size=3, padding=1)
         self.bnorm1a = nn.BatchNorm2d(32)
         self.conv1b = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
         self.bnorm1b = nn.BatchNorm2d(32)
@@ -50,7 +44,13 @@ class MICRANet(nn.Module):
         self.outputs = {}
 
     def forward(self, x):
+        """
+        Implements the forward method of `MICRANet`
 
+        :param x: A `torch.tensor` of the input data
+
+        :returns : A `torch.tensor` of the classified input data
+        """
         x = nn.functional.relu(self.bnorm1a(self.conv1a(x)))
         if self.grad:
             x.register_hook(self.save_grad("1a"))
@@ -98,6 +98,11 @@ class MICRANet(nn.Module):
         return x
 
     def save_grad(self, name):
+        """
+        Implements a storing method of the gradients
+
+        :param name: A `str` of the name of the layer
+        """
         def hook(grad):
             self.grads[name] = grad.cpu().data.numpy()
         return hook
