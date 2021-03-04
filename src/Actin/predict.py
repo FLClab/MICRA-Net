@@ -8,6 +8,7 @@ import pickle
 import json
 import glob
 import sys
+import h5py
 
 from matplotlib import pyplot
 from skimage import io
@@ -91,7 +92,7 @@ class Predicter:
         """
         Loads the model from model_path
         """
-        net_params, trainer_params = self.load(self.model_path)
+        net_params, trainer_params = self.load()
         self.model = MICRANet(grad=True, **trainer_params)
         self.model.eval()
         self.model.load_state_dict(net_params)
@@ -107,12 +108,16 @@ class Predicter:
         io.imsave(os.path.join(self.save_folder, "{}_precise.tif".format(batch)), precise.astype(numpy.float32), check_contrast=False)
         io.imsave(os.path.join(self.save_folder, "{}_rawprecise.tif".format(batch)), raw_precise.astype(numpy.float32), check_contrast=False)
 
-    def load(self, folder):
+    def load(self):
         """
         Loads a previous network and optimizer state
         """
-        net_params = torch.load(os.path.join(folder, "params.net"), map_location=None if self.cuda else "cpu")
-        trainer_params = json.load(open(os.path.join(folder, "trainer_params.json"), "r"))
+        with h5py.File(os.path.join(self.model_path, "ActinModelZoo.hdf5"), "r") as file:
+            networks = {}
+            for key, values in file["MICRANet"].items():
+                networks[key] = {k : torch.tensor(v[()]) for k, v in values.items()}
+            trainer_params = json.loads(file["MICRANet"].attrs["trainer_params"])
+        net_params = networks[key]
         return net_params, trainer_params
 
 if __name__ == "__main__":
@@ -123,6 +128,6 @@ if __name__ == "__main__":
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
-    predicter = Predicter(data_path, model_path, save_folder, cuda=False)
+    predicter = Predicter(data_path, model_path, save_folder, cuda=True)
     predicter.classify()
     predicter.predict()
