@@ -8,6 +8,7 @@ import pickle
 import json
 import glob
 import sys
+import h5py
 
 from matplotlib import pyplot
 from skimage import io
@@ -24,7 +25,8 @@ class Predicter:
     """
     Class to make predictions on a set of images
     """
-    def __init__(self, data_path, model_path, save_folder, cuda=False, size=512):
+    def __init__(self, data_path, model_path, save_folder, cuda=False, size=512,
+                 supervision="1:5"):
         """
         Inits the predicter class
 
@@ -32,6 +34,7 @@ class Predicter:
         :param model_path: A file path to the model
         :param save_folder: A file path where to save the files
         :param cuda: Wheter to use cuda
+        :param supervision: A `str` of the level of supervision
         """
         # Assigns member variables
         self.data_path = data_path
@@ -39,6 +42,7 @@ class Predicter:
         self.save_folder = save_folder
         self.cuda = cuda
         self.size = size
+        self.supervision = supervision
 
         dataset = loader.Datasetter(self.data_path)
         self.loader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=1)
@@ -93,7 +97,7 @@ class Predicter:
         """
         Loads the model from model_path
         """
-        net_params, trainer_params = self.load(self.model_path)
+        net_params, trainer_params = self.load()
         self.model = MICRANet(grad=True, **trainer_params)
         self.model.eval()
         self.model.load_state_dict(net_params)
@@ -109,22 +113,37 @@ class Predicter:
         io.imsave(os.path.join(self.save_folder, "{}_precise.tif".format(batch)), precise.astype(numpy.float32), check_contrast=False)
         io.imsave(os.path.join(self.save_folder, "{}_rawprecise.tif".format(batch)), raw_precise.astype(numpy.float32), check_contrast=False)
 
-    def load(self, folder):
+    def load(self):
         """
         Loads a previous network and optimizer state
         """
-        net_params = torch.load(os.path.join(folder, "params.net"), map_location=None if self.cuda else "cpu")
-        trainer_params = json.load(open(os.path.join(folder, "trainer_params.json"), "r"))
-        self.class_thresholds = numpy.load(os.path.join(folder, "class_thresholds.npy"))
+        with h5py.File(os.path.join(self.model_path, "EMModelZoo.hdf5"), "r") as file:
+            networks = {}
+            for key, values in file["-".join(("MICRANet", self.supervision))].items():
+                networks[key] = {k : torch.tensor(v[()]) for k, v in values.items()}
+            trainer_params = json.loads(file["-".join(("MICRANet", self.supervision))].attrs["trainer_params"])
+            self.class_thresholds = numpy.array(file["-".join(("MICRANet", self.supervision))].attrs["class_thresholds"])
+        net_params = networks[key]
         return net_params, trainer_params
 
 if __name__ == "__main__":
+
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", action="store_true", default=False,
+                        help="(optional) Wheter cuda can be used")
+    parser.add_argument("--supervision", type=str, default="1:5",
+                        help="(optional) Which supervision level to load")
+    args = parser.parse_args()
+
+    available_supervision = ["2:1", "1:1", "1:2", "1:5", "1:8", "1:16"]
+    assert args.supervision in available_supervision, "The supervision level does not exists... Here's the valid list : [{}]".format(", ".join(available_supervision))
 
     data_path = os.path.join(".", "data")
     model_path = os.path.join(".", "pretrained")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
-    predicter = Predicter(data_path, model_path, save_folder, cuda=False)
+    predicter = Predicter(data_path, model_path, save_folder, cuda=args.cuda, supervision=args.supervision)
     predicter.predict()
     predicter.classify()
