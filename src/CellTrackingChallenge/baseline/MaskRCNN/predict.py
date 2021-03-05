@@ -162,27 +162,51 @@ class Predicter:
         # Loads the model
         self.load_network()
 
-        dataset = loader.Datasetter(self.data_path, self.trainer_params)
-        self.loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1)
+        self.image_folder_iterator = loader.ImageFolderIterator(self.data_path)
 
     def predict(self):
         """
         Predicts the data from the dataloader. Saves the output save_folder
         """
-        for i, (X) in enumerate(tqdm(self.loader)):
-            X = torch.transpose(X, 0, 1)
-            if X.ndim == 3:
-                X = X.unsqueeze(1)
+        size = self.trainer_params["size"]
+        num_classes = self.trainer_params["model_params"]["num_classes"]
 
-            if self.cuda:
-                X = X.cuda()
+        for i, image in enumerate(tqdm(self.image_folder_iterator)):
 
-            pred = self.model.forward(X)
-            masks = []
-            for p in pred:
-                mask, objs = get_masks(**p, score_thres=0.5, num_classes=self.trainer_params["model_params"]["num_classes"])
-                masks.append(mask)
-            masks = numpy.array(masks)[:, 1:]
+            # Pads the image to avoid undesired edge effect
+            if image.ndim == 2:
+                image = numpy.expand_dims(image, 0)
+            image = numpy.pad(
+                image, ((0, 0), (size // 2, size // 2), (size // 2, size // 2)), mode="symmetric"
+            )
+
+            # Creates loader of the images
+            dataset = loader.Datasetter(image, self.trainer_params)
+            dataloader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=1)
+
+            # Creates the prediction builder
+            pb = loader.PredictionBuilder(image.shape[-2:], size, num_classes=num_classes)
+            for X, (positions_y, positions_x) in dataloader:
+                if X.ndim == 3:
+                    X = X.unsqueeze(1)
+
+                if self.cuda:
+                    X = X.cuda()
+
+                pred = self.model.forward(X)
+                masks = []
+                for p in pred:
+                    mask, objs = get_masks(**p, score_thres=0.5, num_classes=num_classes)
+                    masks.append(mask)
+                masks = numpy.array(masks)
+
+                for pos_y, pos_x, mask in zip(positions_y, positions_x, masks):
+                    pb.add_predictions_ji(mask, pos_y, pos_x)
+
+            # Return current prediction and crops the padded area
+            masks = pb.return_prediction()
+            masks = masks[:, size // 2 : -size // 2,
+                             size // 2 : -size // 2]
             self.save_images(i, X.cpu().data.numpy(), masks)
 
     def load_network(self):
