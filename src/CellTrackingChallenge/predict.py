@@ -8,6 +8,7 @@ import pickle
 import json
 import glob
 import sys
+import h5py
 
 from matplotlib import pyplot
 from skimage import io
@@ -59,10 +60,10 @@ class Predicter:
                 X  = X.cuda()
 
             # Computes the gradient class activation map
-            local_maps, pred = gradCAM.class_activation_map(self.model, X, cuda=self.cuda, size=X.shape[-1])
+            local_maps, pred = gradCAM.class_activation_map(self.model, X, cuda=self.cuda, size=X.shape[-1], num_classes=self.trainer_params["num_classes"])
 
             # Thresholds the class activation map
-            precise, raw_precise = gradCAM.segment_cam(local_maps, pred, X, size=X.shape[-1])
+            precise, raw_precise = gradCAM.segment_cam(local_maps, pred, X, size=X.shape[-1], num_classes=self.trainer_params["num_classes"])
 
             self.save_images(i, X.cpu().numpy().squeeze(),
                                 local_maps, precise, raw_precise)
@@ -92,9 +93,9 @@ class Predicter:
         """
         Loads the model from model_path
         """
-        net_params, trainer_params = self.load()
-        trainer_params["size"] = self.size
-        self.model = MICRANet(grad=True, **trainer_params)
+        net_params, self.trainer_params = self.load()
+        self.trainer_params["size"] = self.size
+        self.model = MICRANet(grad=True, **self.trainer_params)
         self.model.eval()
         self.model.load_state_dict(net_params)
         if self.cuda:
@@ -123,11 +124,17 @@ class Predicter:
 
 if __name__ == "__main__":
 
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", action="store_true", default=False,
+                        help="(optional) Wheter cuda can be used")
+    args = parser.parse_args()
+
     data_path = os.path.join(".", "data")
     model_path = os.path.join(".", "pretrained")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
-    predicter = Predicter(data_path, model_path, save_folder, cuda=False)
+    predicter = Predicter(data_path, model_path, save_folder, cuda=args.cuda)
     predicter.predict()
     predicter.classify()

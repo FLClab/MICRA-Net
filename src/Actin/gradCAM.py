@@ -13,9 +13,20 @@ from skimage import filters, morphology
 
 import utils
 
-def class_activation_map(network, X, cuda=False, size=256):
+def class_activation_map(network, X, cuda=False, size=256, num_classes=2):
+    """
+    Extracts the grad-CAMs from the network
 
-    grad_eye = torch.eye(2, requires_grad=True)
+    :param network: A network model
+    :param X: A `torch.tensor` of the images
+    :param cuda: (optional) Wheter the calculation should be done on GPU
+    :param size: (optional) An `int` of the size
+    :param num_classes: (optional) An `int` of the number of classes
+
+    :returns : A `numpy.ndarray` of local maps with shape (batch, 10, num_classes, size, size)
+               A `numpy.ndarray` of the prediction of the model
+    """
+    grad_eye = torch.eye(num_classes, requires_grad=True)
     if cuda:
         grad_eye = grad_eye.cuda()
 
