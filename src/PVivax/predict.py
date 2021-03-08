@@ -8,9 +8,10 @@ import pickle
 import json
 import glob
 import sys
+import h5py
 
 from matplotlib import pyplot
-from skimage import io, filters, morphology, measure
+from skimage import io
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from collections import defaultdict
@@ -20,54 +21,11 @@ import gradCAM
 
 from network import MICRANet
 
-def threshold(raw_images):
-    """
-    Thresholds a stack of input images
-
-    :param image: A `numpy.ndarray` of size (B, C, H, W)
-
-    :returns : A `numpy.ndarray` of the thresholded images
-    """
-    raw_images = numpy.pad(raw_images, ((0, 0), (0, 0), (1, 1), (1, 1)), mode="constant")
-
-    predictions = []
-    for raw_image in raw_images:
-
-        raw_image = raw_image.squeeze()
-        maximum_pred_pos = numpy.unravel_index(raw_image.argmax(), raw_image.shape)
-
-        filtered = filters.gaussian(raw_image, sigma=10)
-
-        prediction = numpy.zeros_like(filtered)
-
-        if not numpy.all(filtered == 0):
-
-            threshold = filters.threshold_otsu(filtered)
-            filtered = filtered >= threshold
-
-            filtered = morphology.remove_small_holes(filtered, area_threshold=2500)
-            precise_label_boundary, num_labels = measure.label(filtered, return_num=True)
-            precise_label = measure.label(filtered)
-
-            if num_labels < 1:
-                continue
-            for j in range(1, num_labels + 1):
-                sorted_vertices = measure.find_contours((precise_label == j).astype(float), 0.5, fully_connected="high")
-                if sorted_vertices:
-                    for vertices in sorted_vertices:
-                        in_poly = measure.points_in_poly(numpy.array(maximum_pred_pos)[numpy.newaxis, :], vertices)
-                        if in_poly:
-                            # ax[2].imshow((precise_label == j).astype(int)[1 : -1, 1 : -1])
-                            prediction = (precise_label == j).astype(int)[1 : -1, 1 : -1]
-                            break
-            predictions.append(prediction)
-    return numpy.array(predictions)
-
 class Predicter:
     """
     Class to make predictions on a set of images
     """
-    def __init__(self, data_path, model_path, save_folder, cuda=False, size=512):
+    def __init__(self, data_path, model_path, save_folder, cuda=False, size=512, supervision="finetuned"):
         """
         Inits the predicter class
 
@@ -82,6 +40,7 @@ class Predicter:
         self.save_folder = save_folder
         self.cuda = cuda
         self.size = size
+        self.supervision = supervision
 
         dataset = loader.Datasetter(self.data_path)
         self.loader = DataLoader(dataset, batch_size=2, shuffle=False, num_workers=1)
@@ -114,7 +73,7 @@ class Predicter:
                 raw_avg += raw_precise
 
             raw_precise = raw_avg / len(self.models)
-            precise = threshold(raw_precise)
+            precise = gradCAM.threshold(raw_precise)
 
             self.save_images(f"{i}", X.cpu().numpy().squeeze(),
                                 local_maps, precise, raw_precise)
@@ -151,8 +110,7 @@ class Predicter:
         """
         Loads the model from model_path
         """
-        net_params = self.load(self.model_path)
-
+        net_params = self.load()
         self.models = [MICRANet(grad=True, **self.trainer_params) for _ in range(len(net_params))]
         for model in self.models:
             model.eval()
@@ -168,24 +126,41 @@ class Predicter:
         io.imsave(os.path.join(self.save_folder, "{}_precise.tif".format(batch)), precise.astype(numpy.float32), check_contrast=False)
         io.imsave(os.path.join(self.save_folder, "{}_rawprecise.tif".format(batch)), raw_precise.astype(numpy.float32), check_contrast=False)
 
-    def load(self, folder):
+    def load(self):
         """
         Loads a previous network and optimizer state
         """
-        self.trainer_params = json.load(open(os.path.join(folder, "trainer_params.json"), "r"))
-        self.trainer_params["size"] = 512
-        self.class_thresholds = numpy.load(os.path.join(folder, "class_thresholds.npy"))
-        if ("k-folds" in self.trainer_params) and (self.trainer_params["k-folds"] != 1):
-            net_params = [torch.load(os.path.join(folder, f"fold-{i}", "params.net"), map_location=None if self.cuda else "cpu") for i in range(self.trainer_params["k-folds"])]
+        with h5py.File(os.path.join(self.model_path, "PVivaxModelZoo.hdf5"), "r") as file:
+            networks = {}
+            for key, values in file["-".join(("MICRANet", self.supervision))].items():
+                if self.supervision == "finetuned":
+                    networks[key] = [{k : torch.tensor(v[()]) for k, v in fold_values.items()} for fold, fold_values in values.items()]
+                else:
+                    networks[key] = [{k : torch.tensor(v[()]) for k, v in values.items()}]
+            self.trainer_params = json.loads(file["-".join(("MICRANet", self.supervision))].attrs["trainer_params"])
+            self.trainer_params["size"] = self.size
+            self.class_thresholds = numpy.array(file["-".join(("MICRANet", self.supervision))].attrs["class_thresholds"])
+        net_params = networks[key]
         return net_params
 
 if __name__ == "__main__":
+
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", action="store_true", default=False,
+                        help="(optional) Wheter cuda can be used")
+    parser.add_argument("--supervision", type=str, default="finetuned",
+                        help="(optional) Which supervision level to load")
+    args = parser.parse_args()
+
+    available_supervision = ["naive", "finetuned"]
+    assert args.supervision in available_supervision, "The supervision level does not exists... Here's the valid list : [{}]".format(", ".join(available_supervision))
 
     data_path = os.path.join(".", "data")
     model_path = os.path.join(".", "pretrained")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
-    predicter = Predicter(data_path, model_path, save_folder, cuda=False)
+    predicter = Predicter(data_path, model_path, save_folder, cuda=args.cuda, supervision=args.supervision)
     predicter.predict()
     predicter.classify()
