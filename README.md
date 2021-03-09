@@ -36,7 +36,7 @@ Each dataset folder contains at least :
 - `predict.py` : A script which can be used to infer the network on a subset of testing images.
 - `network.py` : The MICRA-Net architecture in PyTorch.
 
-We provide an example of training MICRA-Net from a predefined `numpy.ndarray` in `src/MNIST` or from an `hdf5` file in `src/Actin`. We recommend using the latter when training MICRA-Net. In the `src/Actin` folder, we also provide training examples for a U-Net and Mask R-CNN baselines. These training examples can serve to train on a new dataset. See the [training section](#training) below for a detailed procedure.
+We provide an example of training MICRA-Net from an `hdf5` file in `src/Actin`. In the `src/Actin` folder, we also provide training examples for a U-Net and Mask R-CNN baselines. These training examples can serve as building blocks for training on a new dataset. See the [training section](#training) below for a detailed procedure.
 
 To facilitate the inference on the testing images, we created a `predict.py` within each subfolders. Please refer to the [inference section](#inference) below for a detailed procedure.
 
@@ -61,20 +61,21 @@ _A more experienced user may download specific models and set the path according
 __NOTE.__ We intentionally removed the Ilastik models from the download to reduce the size of the downloaded folder. The Ilastik models can be downloaded from the following links [Actin](https://s3.valeria.science/flclab-micranet/MICRA-Net/models-ilastik/ActinModelZoo-ilastik.hdf5) and [Cell Tracking Challenge](https://s3.valeria.science/flclab-micranet/MICRA-Net/models-ilastik/CTCModelZoo-ilastik.hdf5).
 
 The _models_ folder contains each zoo models, where each zoo is composed of one instance of a trained model. The zoo models are `hdf5` files with the following file architecture
-```
-FILE : {
-    "ARCHITECTURE" : {
+```python
+"FILE" : {
+    "ARCHITECTURE1" : {
         "model_name" : {
-            "weights_a" : [],
-            "weights_b" : []
+            "weights_a" : h5py.Dataset,
+            "weights_b" : h5py.Dataset
         }
     },
-    "ARCHITECTURE" : {
+    "ARCHITECTURE2" : {
         "model_name" : {
-            "weights_a" : [],
-            "weights_b" : []
+            "weights_a" : h5py.Dataset,
+            "weights_b" : h5py.Dataset
         }
-    }
+    },
+    ...
 }
 ```
 
@@ -95,6 +96,25 @@ The same procedure may be applied to train the baseline models : U-Net and Mask 
 ```bash
 cd src/Actin/baseline/<UNet OR MaskRCNN>
 python train.py --dry-run
+```
+
+### Training from in-house data
+
+The provided training example in `src/Actin` contains all the necessary building blocks to train MICRA-Net for a different in-house dataset, provided that the user makes some minor modifications to the `HDF5Dataset` class. 
+
+The structure of the dataset should be the following 
+```python
+"file" : {
+    "group1" : {
+        "data" : h5py.Dataset,
+        "label" : h5py.Dataset
+    },
+    "group2" : {
+        "data" : h5py.Dataset,
+        "label" : h5py.Dataset
+    },
+    ...
+}
 ```
 
 <a id="inference"></a>
