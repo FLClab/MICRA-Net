@@ -72,31 +72,33 @@ class HDF5Dataset(Dataset):
             image_crop = numpy.pad(image_crop, ((0, self.size - image_crop.shape[0]), (0, self.size - image_crop.shape[1])), "constant")
             label_crop = numpy.pad(label_crop, ((0, 0), (0, self.size - label_crop.shape[1]), (0, self.size - label_crop.shape[2])), "constant")
 
-        image = image_crop.astype(numpy.float32)
-        label = numpy.sum(label_crop, axis=(1, 2)) > (0.05 * self.size * self.size)
+        image_crop = image_crop.astype(numpy.float32)
+        label_crop = label_crop.astype(numpy.float32)
 
         # Applies data augmentation
         if not self.validation:
             if random.random() < self.data_aug:
                 # left-right flip
-                image = numpy.fliplr(image).copy()
+                image_crop = numpy.fliplr(image_crop).copy()
+                label_crop = numpy.fliplr(label_crop).copy()
 
             if random.random() < self.data_aug:
                 # up-down flip
-                image = numpy.flipud(image).copy()
+                image_crop = numpy.flipud(image_crop).copy()
+                label_crop = numpy.flipud(label_crop).copy()
 
             if random.random() < self.data_aug:
                 # intensity scale
                 intensityScale = numpy.clip(numpy.random.lognormal(0.01, numpy.sqrt(0.01)), 0, 1)
-                image = numpy.clip(image * intensityScale, 0, 1)
+                image_crop = numpy.clip(image_crop * intensityScale, 0, 1)
 
             if random.random() < self.data_aug:
                 # gamma adaptation
                 gamma = numpy.clip(numpy.random.lognormal(0.005, numpy.sqrt(0.005)), 0, 1)
-                image = numpy.clip(image**gamma, 0, 1)
+                image_crop = numpy.clip(image_crop**gamma, 0, 1)
 
         x = torch.tensor(image_crop, dtype=torch.float32)
-        y = torch.tensor(label, dtype=torch.float32)
+        y = torch.tensor(label_crop > 0, dtype=torch.float32)
         return x, y
 
     def __len__(self):

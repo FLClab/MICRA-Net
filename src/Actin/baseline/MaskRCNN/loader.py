@@ -45,11 +45,11 @@ class HDF5Dataset(Dataset):
                 data = group["data"][()].astype(numpy.float32) # Images
                 label = group["label"][()] # shape is Rings, Fibers, and Dendrite
                 shapes = group["label"].attrs["shapes"] # Not all images have same shape
-                for k, (dendrite_mask, shape) in enumerate(zip(label[:, -1], shapes)):
+                for k, (_label, shape) in enumerate(zip(label, shapes)):
                     for j in range(0, shape[0], int(self.size * self.step)):
                         for i in range(0, shape[1], int(self.size * self.step)):
-                            dendrite = dendrite_mask[j : j + self.size, i : i + self.size]
-                            if dendrite.sum() >= 0.1 * self.size * self.size: # dendrite is at least 1% of image
+                            positive_label = _label[:2, j : j + self.size, i : i + self.size] > 0
+                            if positive_label.sum() >= 0.01 * self.size * self.size: # MaskRCNN requires positive crops
                                 samples.append((group_name, k, j, i))
                 self.cache[group_name] = {"data" : data, "label" : label[:, :-1]}
         return samples
@@ -72,32 +72,76 @@ class HDF5Dataset(Dataset):
             image_crop = numpy.pad(image_crop, ((0, self.size - image_crop.shape[0]), (0, self.size - image_crop.shape[1])), "constant")
             label_crop = numpy.pad(label_crop, ((0, 0), (0, self.size - label_crop.shape[1]), (0, self.size - label_crop.shape[2])), "constant")
 
-        image = image_crop.astype(numpy.float32)
-        label = numpy.sum(label_crop, axis=(1, 2)) > (0.05 * self.size * self.size)
+        image_crop = image_crop.astype(numpy.float32)
+        label_crop = label_crop.astype(numpy.float32)
 
         # Applies data augmentation
         if not self.validation:
             if random.random() < self.data_aug:
                 # left-right flip
-                image = numpy.fliplr(image).copy()
+                image_crop = numpy.fliplr(image_crop).copy()
+                label_crop = numpy.fliplr(label_crop).copy()
 
             if random.random() < self.data_aug:
                 # up-down flip
-                image = numpy.flipud(image).copy()
+                image_crop = numpy.flipud(image_crop).copy()
+                label_crop = numpy.flipud(label_crop).copy()
 
             if random.random() < self.data_aug:
                 # intensity scale
                 intensityScale = numpy.clip(numpy.random.lognormal(0.01, numpy.sqrt(0.01)), 0, 1)
-                image = numpy.clip(image * intensityScale, 0, 1)
+                image_crop = numpy.clip(image_crop * intensityScale, 0, 1)
 
             if random.random() < self.data_aug:
                 # gamma adaptation
                 gamma = numpy.clip(numpy.random.lognormal(0.005, numpy.sqrt(0.005)), 0, 1)
-                image = numpy.clip(image**gamma, 0, 1)
+                image_crop = numpy.clip(image_crop**gamma, 0, 1)
+
+        boxes, labels, masks = [], [], []
+        for class_id, mask in enumerate(label_crop):
+            # Returns unique ids from mask
+            obj_ids = numpy.unique(mask)[1:]
+            # Slices each object in the mask in a new array
+            obj_mask = mask == obj_ids[:, numpy.newaxis, numpy.newaxis]
+
+            # get bounding box coordinates for each mask
+            num_objs = len(obj_ids)
+            if num_objs > 0:
+                keep = []
+                for i in range(num_objs):
+                    pos = numpy.where(obj_mask[i])
+                    xmin = numpy.min(pos[1])
+                    xmax = numpy.max(pos[1])
+                    ymin = numpy.min(pos[0])
+                    ymax = numpy.max(pos[0])
+                    # Verify if valid box
+                    if ((xmax - xmin) < 4) or ((ymax - ymin) < 4):
+                        continue
+                    boxes.append([xmin, ymin, xmax, ymax])
+                    labels.append(class_id + 1)
+                    keep.append(i)
+                masks.append(obj_mask[keep])
+
+        masks = numpy.concatenate(masks, axis=0)
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        labels = torch.as_tensor(labels, dtype=torch.int64)
+        masks = torch.as_tensor(masks, dtype=torch.uint8)
+
+        image_id = torch.tensor([index])
+        if len(boxes) > 0:
+            area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        else:
+            area = []
+
+        target = {}
+        target["boxes"] = boxes
+        target["labels"] = labels
+        target["masks"] = masks
+        target["image_id"] = image_id
+        target["area"] = area
 
         x = torch.tensor(image_crop, dtype=torch.float32)
-        y = torch.tensor(label, dtype=torch.float32)
-        return x, y
+        return x, target
 
     def __len__(self):
         return len(self.samples)

@@ -20,32 +20,35 @@ MICRA-Net relies on the latent information embedded within a trained model to ac
 
 # Documentation
 
-The source code is available to the users within the `src` folder. The subfolder contains the code developped for each of the datasets used in the paper.
+The source code is available to the users within the `src` folder. The subfolder contains the code developed for each of the datasets used in the paper.
+
+Within the `src` folder, we provide the `main.py` file which allows the user to download the datasets from source and sets the proper symlinks for the following steps to the downloaded `MICRA-Net` folder.
 
 Each dataset folder contains at least :
-- `pretrained/` : A folder containing the pretrained network parameters and the training parameters used.
 - `data/` : Some images sampled from the testing set.
-- `baseline/` : A folder containing the pretrained baseline and a `predict.py` file to infer on the same provided example images.
+- `baseline/` : A folder containing the baselines and a `predict.py` file to infer on the same provided example images.
 - `predict.py` : A script which can be used to infer the network on a subset of testing images.
 - `network.py` : The MICRA-Net architecture in PyTorch.
 
-We provide an example of training MICRA-Net in `src/MNIST`. Following the installation of Python with its dependencies, the users can test the training of the network using the following lines:
+We provide an example of training MICRA-Net from a predefined `numpy.ndarray` in `src/MNIST` or from an `hdf5` file in `src/Actin`. We recommend using the latter when training MICRA-Net. In the `src/Actin` folder, we also provide training examples for a U-Net and Mask R-CNN baselines. These training examples can serve to train on a new dataset. Following the installation of Python with its dependencies, the users can test the training of the network using the following lines:
 ```bash
-cd src/MNIST
-python train.py
+cd src/Actin
+python train.py --dry-run
 ```
 
 To facilitate the inference on the testing images, we created a `predict.py` script which can be launched using the following:
 ```bash
 python predict.py
 ```
-The infered images will be output in a `segmentation/` folder.
+The inferred images will be output in a `segmentation/` folder.
 
 # System requirements
 
 ## Hardware requirements
 
-MICRA-Net requires a standard computer to run the scripts with sufficient RAM to load an image and network in memory. It is recommended to have a graphical processing unit (GPU).
+For inference, MICRA-Net requires a standard computer to run the scripts with sufficient RAM to load an image and network in memory.
+
+For training MICRA-Net and other baselines in the it Actin folder, a minimum of 16G of available RAM is required to load the data in memory. It is strongly recommended to have a graphical processing unit (GPU). With the default parameters, the current memory necessary on the GPU is less than 12G.
 
 ## Software requirements
 
@@ -59,7 +62,7 @@ The source code `MICRA-Net` relies on Python scientific librairies. The source c
 
 ### Installation guide
 
-Assuming the users have a working installation of Python on their computer (we recommend using [Anaconda](https://docs.anaconda.com/anaconda/install/)), the users  should create a new Python 3.7 environnement to avoid impacting on other file dependencies. The complete installation should be less than 15 minutes.
+Assuming the users have a working installation of Python on their computer (we recommend using [Anaconda](https://docs.anaconda.com/anaconda/install/)), the users should create a new Python 3.7 environnement to avoid impacting on other file dependencies. The complete installation should be less than 15 minutes.
 
 ```bash
 conda create -n micranet python=3.7
