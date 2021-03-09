@@ -22,13 +22,15 @@ MICRA-Net relies on the latent information embedded within a trained model to ac
 
 The source code is available to the users within the `src` folder. The subfolder contains the code developed for each of the datasets used in the paper.
 
+Within the `src` folder, we provide the `main.py` file which allows the user to download the datasets from source and sets the proper symlinks for the following steps to the downloaded `MICRA-Net` folder.
+
 Each dataset folder contains at least :
 - `data/` : Some images sampled from the testing set.
 - `baseline/` : A folder containing the baselines and a `predict.py` file to infer on the same provided example images.
 - `predict.py` : A script which can be used to infer the network on a subset of testing images.
 - `network.py` : The MICRA-Net architecture in PyTorch.
 
-We provide an example of training MICRA-Net from a predefined `numpy.ndarray` in `src/MNIST` or from an `hdf5` file in `src/Actin`. We recommend using the latter when training MICRA-Net. In the `src/Actin` folder, we also provide training examples for a U-Net and Mask R-CNN baselines. Following the installation of Python with its dependencies, the users can test the training of the network using the following lines:
+We provide an example of training MICRA-Net from a predefined `numpy.ndarray` in `src/MNIST` or from an `hdf5` file in `src/Actin`. We recommend using the latter when training MICRA-Net. In the `src/Actin` folder, we also provide training examples for a U-Net and Mask R-CNN baselines. These training examples can serve to train on a new dataset. Following the installation of Python with its dependencies, the users can test the training of the network using the following lines:
 ```bash
 cd src/Actin
 python train.py --dry-run
