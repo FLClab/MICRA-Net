@@ -2,7 +2,7 @@
 import os
 import h5py
 
-model_path = os.path.join("..", "..", "pretrained")
+model_path = os.path.join("..", "..", "MICRA-Net", "models")
 
 with h5py.File(os.path.join(model_path, "ActinModelZoo.hdf5"), "r") as file:
     group = file["Ilastik"]
