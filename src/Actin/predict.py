@@ -56,6 +56,8 @@ class Predicter:
 
             if X.ndim == 3:
                 X = X.unsqueeze(1)
+            if self.cuda:
+                X = X.cuda()
 
             # Computes the gradient class activation map
             local_maps, pred = gradCAM.class_activation_map(self.model, X, cuda=self.cuda, size=X.shape[-1])
@@ -93,7 +95,7 @@ class Predicter:
         Loads the model from model_path
         """
         net_params, trainer_params = self.load()
-        self.model = MICRANet(grad=True, **trainer_params)
+        self.model = MICRANet(grad=True, **trainer_params, **trainer_params["model_params"])
         self.model.eval()
         self.model.load_state_dict(net_params)
         if self.cuda:
@@ -112,7 +114,7 @@ class Predicter:
         """
         Loads a previous network and optimizer state
         """
-        with h5py.File(os.path.join(self.model_path, "ActinModelZoo.hdf5"), "r") as file:
+        with h5py.File(self.model_path, "r") as file:
             networks = {}
             for key, values in file["MICRANet"].items():
                 networks[key] = {k : torch.tensor(v[()]) for k, v in values.items()}
@@ -130,7 +132,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data_path = os.path.join(".", "data")
-    model_path = os.path.join(".", "pretrained")
+    model_path = os.path.join(".", "MICRA-Net", "models", "ActinModelZoo.hdf5")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
