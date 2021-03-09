@@ -29,9 +29,9 @@ Each dataset folder contains at least :
 - `predict.py` : A script which can be used to infer the network on a subset of testing images.
 - `network.py` : The MICRA-Net architecture in PyTorch.
 
-We provide an example of training MICRA-Net in `src/MNIST`. Following the installation of Python with its dependencies, the users can test the training of the network using the following lines:
+We provide an example of training MICRA-Net in `src/MNIST` or `src/Actin`. Following the installation of Python with its dependencies, the users can test the training of the network using the following lines:
 ```bash
-cd src/MNIST
+cd src/<{MNIST,Actin}>
 python train.py
 ```
 

@@ -120,6 +120,57 @@ def save_ckpt(output_folder, networks, trainer_params, model="MICRANet", filenam
             for key, values in params.state_dict().items():
                 group.create_dataset(key, data=values.cpu().data.numpy())
 
+def to_cuda(targets):
+    """
+    Moves a list of data to cuda
+
+    :param targets: A `list` of `dict`
+    """
+    if isinstance(targets, (list, tuple)):
+        tmp = []
+        for target in targets:
+            tmp.append(to_cuda(target))
+        return tmp
+    elif isinstance(targets, dict):
+        tmp = {}
+        for key, values in targets.items():
+            tmp[key] = to_cuda(values)
+        return tmp
+    else:
+        targets = targets.cuda()
+        return targets
+
+def collate_fn(batch):
+    """Creates a user defined collate function
+
+    This method creates the batched items recursively. A batch
+    is a tuple of batched items that are returned by the dataset.
+
+    :param batch: Item to be processed by the method
+
+    :returns : A collated batch
+    """
+    elem = batch[0]
+    if isinstance(elem, torch.Tensor):
+        out = None
+        if torch.utils.data.get_worker_info() is not None:
+            # If we're in a background process, concatenate directly into a
+            # shared memory tensor to avoid an extra copy
+            numel = sum([x.numel() for x in batch])
+            storage = elem.storage()._new_shared(numel)
+            out = elem.new(storage)
+        if not all([elem.size == other_elem.size for other_elem in batch]):
+            return batch
+        return torch.stack(batch, axis=0, out=out)
+    elif isinstance(elem, numpy.ndarray):
+        return torch.as_tensor(batch)
+    elif isinstance(elem, dict):
+        return batch
+    elif isinstance(elem, (int, float, numpy.integer)):
+        return torch.as_tensor(batch)
+    else:
+        return tuple(collate_fn(items) for items in zip(*batch))
+
 if __name__ == "__main__":
 
     import argparse
@@ -152,8 +203,8 @@ if __name__ == "__main__":
         hdf5_validation_path = f"{PATH}/validation_01-04-19.hdf5"
         hdf5_testing_path = f"{PATH}/training_01-04-19.hdf5"
 
-        lr, epochs, min_valid_loss = 1e-3, 250 if not args.dry_run else 1, numpy.inf
-        pos_weight = [3.3, 1.6]
+        lr, epochs, min_valid_loss = 1e-4, 700 if not args.dry_run else 1, numpy.inf
+        pos_weight = [1.]
         stats = defaultdict(list)
         current_datetime = datetime.datetime.today().strftime("%Y%m%d-%H%M%S")
         trainer_params = {
@@ -181,8 +232,10 @@ if __name__ == "__main__":
                 "batch_size" : 32,
             },
             "model_params" : {
-                "num_classes" : 2,
-                "num_input_images" : 1,
+                "in_channels" : 1,
+                "out_channels" : 2,
+                "depth" : 4,
+                "number_filter" : 4,
             },
             "scheduler" : {
                 "patience" : 10,
@@ -192,6 +245,7 @@ if __name__ == "__main__":
                 "verbose" : True
             }
         }
+
         print_params(trainer_params)
 
         # Creation of saving folder
@@ -200,18 +254,16 @@ if __name__ == "__main__":
 
         # Creation of the loaders
         train_dataset = loader.HDF5Dataset(trainer_params["hdf5_training_path"], **trainer_params)
-        train_loader = DataLoader(train_dataset, **trainer_params["dataloader_params"])
+        train_loader = DataLoader(train_dataset, **trainer_params["dataloader_params"], collate_fn=collate_fn)
         valid_dataset = loader.HDF5Dataset(trainer_params["hdf5_validation_path"], validation=True, **trainer_params)
-        valid_loader = DataLoader(valid_dataset, **trainer_params["dataloader_params"])
+        valid_loader = DataLoader(valid_dataset, **trainer_params["dataloader_params"], collate_fn=collate_fn)
 
-        model = network.MICRANet(**trainer_params, **trainer_params["model_params"])
+        model = network.UNet(**trainer_params["model_params"])
         if trainer_params["cuda"]:
             model = model.cuda()
 
         optimizer = torch.optim.Adam(model.parameters(), lr = lr)
-        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(trainer_params["pos_weight"]))
-        if trainer_params["cuda"]:
-            criterion = criterion.cuda()
+        criterion = torch.nn.MSELoss()
 
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, **trainer_params["scheduler"])
         for epoch in range(epochs if args.dry_run else epochs):
@@ -227,14 +279,16 @@ if __name__ == "__main__":
             for i, (X, y) in enumerate(tqdm(train_loader, desc="[----] ")):
 
                 # Reshape
-                if X.dim() == 3:
-                    X = X.unsqueeze(1)
+                if isinstance(X, list):
+                    X = [_X.unsqueeze(0) if _X.dim() == 2 else _X for _X in X]
+                else:
+                    if X.dim() == 3:
+                        X = X.unsqueeze(1)
 
                 # Send to gpu
                 if trainer_params["cuda"]:
                     X = X.cuda()
                     y = y.cuda()
-                y = y.squeeze()
 
                 # Prediction and loss computation
                 pred = model.forward(X)
@@ -250,16 +304,18 @@ if __name__ == "__main__":
 
                 # To avoid memory leak
                 torch.cuda.empty_cache()
-                del X, y, loss
+                del X, y, pred, loss
 
             # Puts the model in evaluation mode
             model.eval()
             for i, (X, y) in enumerate(tqdm(valid_loader, desc="[----] ")):
 
                 # Reshape
-                if X.dim() == 3:
-                    X = X.unsqueeze(1)
-                y = y.squeeze()
+                if isinstance(X, list):
+                    X = [_X.unsqueeze(0) if _X.dim() == 2 else _X for _X in X]
+                else:
+                    if X.dim() == 3:
+                        X = X.unsqueeze(1)
 
                 # Send to gpu
                 if trainer_params["cuda"]:
@@ -275,7 +331,7 @@ if __name__ == "__main__":
 
                 # To avoid memory leak
                 torch.cuda.empty_cache()
-                del X, y, loss
+                del X, y, pred, loss
 
             # Aggregate stats
             for key, func in zip(("trainMean", "trainMed", "trainMin", "trainStd"),
@@ -295,7 +351,6 @@ if __name__ == "__main__":
                     trainer_params["model_name"] : model
                 }
                 save_ckpt(output_folder, networks=networks, trainer_params=trainer_params)
-
                 del networks
 
             print("[----] Epoch {} done!".format(epoch + 1))
