@@ -62,14 +62,14 @@ __NOTE.__ We intentionally removed the Ilastik models from the download to reduc
 
 The _models_ folder contains each zoo models, where each zoo is composed of one instance of a trained model. The zoo models are `hdf5` files with the following file architecture
 ```python
-"FILE" : {
-    "ARCHITECTURE1" : {
+"file" : {
+    "architecture1" : {
         "model_name" : {
             "weights_a" : h5py.Dataset,
             "weights_b" : h5py.Dataset
         }
     },
-    "ARCHITECTURE2" : {
+    "architecture2" : {
         "model_name" : {
             "weights_a" : h5py.Dataset,
             "weights_b" : h5py.Dataset
