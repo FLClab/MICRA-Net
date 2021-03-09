@@ -92,7 +92,7 @@ def print_params(trainer_params):
     print_strings(strings, columns)
     print_center("", columns)
 
-def save_ckpt(output_folder, networks, trainer_params, model="MICRANet", filename="checkpoints.hdf5",
+def save_ckpt(output_folder, networks, trainer_params, model="UNet", filename="checkpoints.hdf5",
                 verbose=True):
     """
     Saves the current network state to a hdf5 file. The architecture of the hdf5
@@ -134,7 +134,7 @@ if __name__ == "__main__":
                         help="Sets the number of repetitions")
     args = parser.parse_args()
 
-    PATH = "./dataset"
+    PATH = "../../MICRA-Net"
 
     add_to_seed = -1
     for _ in range(args.num):
@@ -148,9 +148,9 @@ if __name__ == "__main__":
         torch.backends.cudnn.enabled=False
         torch.backends.cudnn.deterministic=True
 
-        hdf5_training_path = f"{PATH}/training_01-04-19.hdf5"
-        hdf5_validation_path = f"{PATH}/validation_01-04-19.hdf5"
-        hdf5_testing_path = f"{PATH}/training_01-04-19.hdf5"
+        hdf5_training_path = f"{PATH}/datasets/training_01-04-19.hdf5"
+        hdf5_validation_path = f"{PATH}/datasets/validation_01-04-19.hdf5"
+        hdf5_testing_path = f"{PATH}/datasets/training_01-04-19.hdf5"
 
         lr, epochs, min_valid_loss = 1e-4, 700 if not args.dry_run else 1, numpy.inf
         pos_weight = [1.]
