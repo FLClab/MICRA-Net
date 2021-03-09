@@ -114,7 +114,7 @@ class Predicter:
         """
         Loads a previous network and optimizer state
         """
-        with h5py.File(os.path.join(self.model_path, "CTCModelZoo.hdf5"), "r") as file:
+        with h5py.File(self.model_path, "r") as file:
             networks = {}
             for key, values in file["MICRANet"].items():
                 networks[key] = {k : torch.tensor(v[()]) for k, v in values.items()}
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data_path = os.path.join(".", "data")
-    model_path = os.path.join(".", "pretrained")
+    model_path = os.path.join(".", "MICRA-Net", "models", "CTCModelZoo.hdf5")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 

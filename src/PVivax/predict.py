@@ -130,7 +130,7 @@ class Predicter:
         """
         Loads a previous network and optimizer state
         """
-        with h5py.File(os.path.join(self.model_path, "PVivaxModelZoo.hdf5"), "r") as file:
+        with h5py.File(self.model_path, "r") as file:
             networks = {}
             for key, values in file["-".join(("MICRANet", self.supervision))].items():
                 if self.supervision == "finetuned":
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     assert args.supervision in available_supervision, "The supervision level does not exists... Here's the valid list : [{}]".format(", ".join(available_supervision))
 
     data_path = os.path.join(".", "data")
-    model_path = os.path.join(".", "pretrained")
+    model_path = os.path.join(".", "MICRA-Net", "models", "PVivaxModelZoo.hdf5")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
