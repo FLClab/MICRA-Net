@@ -30,17 +30,80 @@ Each dataset folder contains at least :
 - `predict.py` : A script which can be used to infer the network on a subset of testing images.
 - `network.py` : The MICRA-Net architecture in PyTorch.
 
-We provide an example of training MICRA-Net from a predefined `numpy.ndarray` in `src/MNIST` or from an `hdf5` file in `src/Actin`. We recommend using the latter when training MICRA-Net. In the `src/Actin` folder, we also provide training examples for a U-Net and Mask R-CNN baselines. These training examples can serve to train on a new dataset. Following the installation of Python with its dependencies, the users can test the training of the network using the following lines:
+We provide an example of training MICRA-Net from a predefined `numpy.ndarray` in `src/MNIST` or from an `hdf5` file in `src/Actin`. We recommend using the latter when training MICRA-Net. In the `src/Actin` folder, we also provide training examples for a U-Net and Mask R-CNN baselines. These training examples can serve to train on a new dataset. See the [training section](#training) below for a detailed procedure.
+
+To facilitate the inference on the testing images, we created a `predict.py` within each subfolders. Please refer to the [inference section](#inference) below for a detailed procedure.
+
+# Experiment
+
+In the following we provide the user with some steps to allow training and inference of images using the provided models.
+
+## Downloads
+
+We provide a script `main.py` which allows to download the models and data from source. Following the installation of Python (see [Software requirements](#software-requirements)), the user may launch the script
+```bash
+cd src
+python main.py
+```
+
+This script downloads the models and datasets in the `~/Downloads/MICRA-Net` folder of the computer. This folder contains a _models_ and a _datasets_ folder. __NOTE__ We intentionally removed the Ilastik models from the download to reduce the size of the download folder. The Ilastik models can be downloaded from here ([Actin](https://s3.valeria.science/flclab-micranet/MICRA-Net/models-ilastik/ActinModelZoo-ilastik.hdf5) and [Cell Tracking Challenge](https://s3.valeria.science/flclab-micranet/MICRA-Net/models-ilastik/CTCModelZoo-ilastik.hdf5)).
+
+The _models_ folder contains each zoo models, where each zoo is composed of one instance of a trained model. The zoo models are `hdf5` files with the following file architecture
+```
+FILE : {
+    "ARCHITECTURE" : {
+        "model_name" : {
+            "weights_a" : [],
+            "weights_b" : []
+        }
+    },
+    "ARCHITECTURE" : {
+        "model_name" : {
+            "weights_a" : [],
+            "weights_b" : []
+        }
+    }
+}
+```
+
+The _datasets_ folder contains the F-actin dataset which is already split in training, validation, and testing.
+
+<a id="training"></a>
+## Training
+
+We provide a training example within the F-actin dataset folder using the downloaded datasets. To train MICRA-Net for one epoch use the following
 ```bash
 cd src/Actin
 python train.py --dry-run
 ```
 
-To facilitate the inference on the testing images, we created a `predict.py` script which can be launched using the following:
+The `--dry-run` flag is used to test the training of the model. By default, the model will be saved in a `hdf5` file in the output folder (`~/Downloads/MICRA-Net/Results/dryrun/checkpoints.hdf5`).
+
+The same procedure may be applied to train the baseline models : U-Net and Mask R-CNN.
 ```bash
-python predict.py
+cd src/Actin/baseline/<UNet OR MaskRCNN>
+python train.py --dry-run
 ```
-The inferred images will be output in a `segmentation/` folder.
+
+<a id="inference"></a>
+## Inference
+
+We provide a `predict.py` script for all provided models. In all cases, the script can be launched with the `--cuda` flag to increase the speed of computation. Navigate to the desired folder and launch the script
+```bash
+cd src/Actin
+python predict.py --cuda
+```
+
+This script will use the images provided within the `data/` folder and create a `segmentation/` folder containing all of the predictions.
+
+In some cases, the `predict.py` script can be called with a different supervision level (using the `--supervision [LEVEL]` flag). The user should refer to the provided script for specific details.
+
+The user may use the trained model obtained from [training](#training) by changing the model path. Specifically, the line
+```python
+model_path = os.path.join(".", "MICRA-Net", "models", "ActinModelZoo.hdf5")
+# should be replaced by
+model_path = os.path.join(".", "MICRA-Net", "Results", "dryrun", "checkpoints.hdf5")
+```
 
 # System requirements
 
@@ -50,6 +113,7 @@ For inference, MICRA-Net requires a standard computer to run the scripts with su
 
 For training MICRA-Net and other baselines in the it Actin folder, a minimum of 16G of available RAM is required to load the data in memory. It is strongly recommended to have a graphical processing unit (GPU). With the default parameters, the current memory necessary on the GPU is less than 12G.
 
+<a id="software-requirements"></a>
 ## Software requirements
 
 ### OS requirements
