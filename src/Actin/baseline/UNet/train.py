@@ -120,57 +120,6 @@ def save_ckpt(output_folder, networks, trainer_params, model="MICRANet", filenam
             for key, values in params.state_dict().items():
                 group.create_dataset(key, data=values.cpu().data.numpy())
 
-def to_cuda(targets):
-    """
-    Moves a list of data to cuda
-
-    :param targets: A `list` of `dict`
-    """
-    if isinstance(targets, (list, tuple)):
-        tmp = []
-        for target in targets:
-            tmp.append(to_cuda(target))
-        return tmp
-    elif isinstance(targets, dict):
-        tmp = {}
-        for key, values in targets.items():
-            tmp[key] = to_cuda(values)
-        return tmp
-    else:
-        targets = targets.cuda()
-        return targets
-
-def collate_fn(batch):
-    """Creates a user defined collate function
-
-    This method creates the batched items recursively. A batch
-    is a tuple of batched items that are returned by the dataset.
-
-    :param batch: Item to be processed by the method
-
-    :returns : A collated batch
-    """
-    elem = batch[0]
-    if isinstance(elem, torch.Tensor):
-        out = None
-        if torch.utils.data.get_worker_info() is not None:
-            # If we're in a background process, concatenate directly into a
-            # shared memory tensor to avoid an extra copy
-            numel = sum([x.numel() for x in batch])
-            storage = elem.storage()._new_shared(numel)
-            out = elem.new(storage)
-        if not all([elem.size == other_elem.size for other_elem in batch]):
-            return batch
-        return torch.stack(batch, axis=0, out=out)
-    elif isinstance(elem, numpy.ndarray):
-        return torch.as_tensor(batch)
-    elif isinstance(elem, dict):
-        return batch
-    elif isinstance(elem, (int, float, numpy.integer)):
-        return torch.as_tensor(batch)
-    else:
-        return tuple(collate_fn(items) for items in zip(*batch))
-
 if __name__ == "__main__":
 
     import argparse
@@ -254,9 +203,9 @@ if __name__ == "__main__":
 
         # Creation of the loaders
         train_dataset = loader.HDF5Dataset(trainer_params["hdf5_training_path"], **trainer_params)
-        train_loader = DataLoader(train_dataset, **trainer_params["dataloader_params"], collate_fn=collate_fn)
+        train_loader = DataLoader(train_dataset, **trainer_params["dataloader_params"])
         valid_dataset = loader.HDF5Dataset(trainer_params["hdf5_validation_path"], validation=True, **trainer_params)
-        valid_loader = DataLoader(valid_dataset, **trainer_params["dataloader_params"], collate_fn=collate_fn)
+        valid_loader = DataLoader(valid_dataset, **trainer_params["dataloader_params"])
 
         model = network.UNet(**trainer_params["model_params"])
         if trainer_params["cuda"]:

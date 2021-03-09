@@ -123,11 +123,17 @@ class Predicter:
 if __name__ == "__main__":
 
 
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", action="store_true", default=False,
+                        help="(optional) Wheter cuda can be used")
+    args = parser.parse_args()
+
     data_path = os.path.join(".", "data")
     model_path = os.path.join(".", "pretrained")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
-    predicter = Predicter(data_path, model_path, save_folder, cuda=True)
+    predicter = Predicter(data_path, model_path, save_folder, cuda=args.cuda)
     predicter.classify()
     predicter.predict()
