@@ -1,6 +1,5 @@
 
 import os
-import urllib
 
 root = os.path.expanduser("~")
 
