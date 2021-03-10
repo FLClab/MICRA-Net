@@ -28,6 +28,8 @@ MICRA-Net relies on the latent information embedded within a trained model to ac
 
 The source code is available to the users within the `src` folder. The subfolder contains the code developed for each of the datasets used in the paper.
 
+The provided scripts are all written in Python. Hence, the user should jump to jump to the [software requirements section](#software-requirements) to validate/install the right version of Python and it's dependencies.
+
 Within the `src` folder, we provide the `main.py` file which allows the user to download the datasets from source and sets the proper symlinks for the following steps to the downloaded `MICRA-Net` folder.
 
 Each dataset folder contains at least :
@@ -90,7 +92,7 @@ cd src/Actin
 python train.py --dry-run
 ```
 
-The `--dry-run` flag is used to test the training of the model. By default, the model will be saved in a `hdf5` file in the output folder (`~/Downloads/MICRA-Net/Results/dryrun/checkpoints.hdf5`).
+The `--dry-run` flag is used to test the training of the model. By default, the model will be saved in a `hdf5` file in the output folder (`~/Downloads/MICRA-Net/Results/dryrun/checkpoints.hdf5`). Training on a standard CPU (i7-7700) should require approximately 15 minutes per epoch.
 
 The same procedure may be applied to train the baseline models : U-Net and Mask R-CNN.
 ```bash
@@ -155,7 +157,7 @@ For training MICRA-Net and other baselines in the `Actin` folder, a minimum of 1
 <a id="os-requirements"></a>
 ### OS requirements
 
-The source code was tested on macOS (10.15) and Ubuntu (18.04 and 20.04). It should also work on Windows with a few `filepath` modifications.
+The source code was tested on macOS (10.15), Ubuntu (18.04 and 20.04), and Windows 10.
 
 <a id="python-dependencies"></a>
 ### Python dependencies
@@ -169,6 +171,7 @@ Assuming the users have a working installation of Python on their computer (we r
 
 ```bash
 conda create -n micranet python=3.7
+conda activate micranet
 pip install -r requirements.txt
 ```
 
