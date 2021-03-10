@@ -1,5 +1,5 @@
-# Removes MICRA-Net folder
-MICRA-Net/
+# Removes MICRA-Net folder and segementation folder
+MICRA-Net
 segmentation/
 
 # Byte-compiled / optimized / DLL files
