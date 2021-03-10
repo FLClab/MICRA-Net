@@ -165,7 +165,7 @@ if __name__ == "__main__":
             "seed" : args.seed + add_to_seed,
             "lr" : lr,
             "epochs" : epochs,
-            "cuda" : True,
+            "cuda" : torch.cuda.is_available(),
             "data_aug" : 0.5,
             "step" : 0.75,
             "pos_weight" : pos_weight,

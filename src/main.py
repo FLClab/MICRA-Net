@@ -1,5 +1,7 @@
 
 import os
+import subprocess
+import platform
 
 root = os.path.expanduser("~")
 
@@ -26,8 +28,13 @@ download_and_extract_archive(
 src = os.path.join(root, "Downloads", "MICRA-Net")
 for folder in ["Actin", "CellTrackingChallenge", "EM", "MNIST", "PVivax"]:
     dst = os.path.join(".", folder, "MICRA-Net")
-    try:
-        os.symlink(src, dst, target_is_directory=True)
-    except FileExistsError:
-        os.remove(dst)
-        os.symlink(src, dst, target_is_directory=True)
+    if platform.system() == "Windows":
+        if os.path.isdir(dst):
+            os.remove(dst)
+        subprocess.check_call('mklink /J "{}" "{}"'.format(dst, src), shell=True)
+    else:
+        try:
+            os.symlink(src, dst, target_is_directory=True)
+        except FileExistsError:
+            os.remove(dst)
+            os.symlink(src, dst, target_is_directory=True)
