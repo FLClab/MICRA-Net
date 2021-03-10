@@ -282,7 +282,7 @@ if __name__ == "__main__":
             for i, (X, y) in enumerate(tqdm(train_loader, desc="[----] ")):
 
                 # Reshape
-                if isinstance(X, list):
+                if isinstance(X, (list, tuple)):
                     X = [_X.unsqueeze(0) if _X.dim() == 2 else _X for _X in X]
                 else:
                     if X.dim() == 3:
@@ -315,7 +315,7 @@ if __name__ == "__main__":
                 for i, (X, y) in enumerate(tqdm(valid_loader, desc="[----] ")):
 
                     # Reshape
-                    if isinstance(X, list):
+                    if isinstance(X, (list, tuple)):
                         X = [_X.unsqueeze(0) if _X.dim() == 2 else _X for _X in X]
                     else:
                         if X.dim() == 3:
