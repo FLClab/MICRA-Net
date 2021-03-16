@@ -10,12 +10,21 @@ from tqdm import *
 from torch.utils.data import DataLoader
 from matplotlib import pyplot
 from sklearn import cluster, decomposition, manifold
-from skimage import filters, morphology, transform
-
-import utils
+from skimage import filters, morphology, transform, measure
 
 def class_activation_map(network, X, cuda=False, size=256, num_classes=1):
+    """
+    Extracts the grad-CAMs from the network
 
+    :param network: A network model
+    :param X: A `torch.tensor` of the images
+    :param cuda: (optional) Wheter the calculation should be done on GPU
+    :param size: (optional) An `int` of the size
+    :param num_classes: (optional) An `int` of the number of classes
+
+    :returns : A `numpy.ndarray` of local maps with shape (batch, 10, num_classes, size, size)
+               A `numpy.ndarray` of the prediction of the model
+    """
     grad_eye = torch.eye(num_classes, requires_grad=True)
     if cuda:
         grad_eye = grad_eye.cuda()
@@ -90,3 +99,46 @@ def segment_cam(cam, pred, X, size=256, num_classes=1):
         segmented_precise.append(total_precise)
         unsegmented_precise.append(raw_precise)
     return numpy.array(segmented_precise), numpy.array(unsegmented_precise)
+
+def threshold(raw_images):
+    """
+    Thresholds a stack of input images
+
+    :param image: A `numpy.ndarray` of size (B, C, H, W)
+
+    :returns : A `numpy.ndarray` of the thresholded images
+    """
+    raw_images = numpy.pad(raw_images, ((0, 0), (0, 0), (1, 1), (1, 1)), mode="constant")
+
+    predictions = []
+    for raw_image in raw_images:
+
+        raw_image = raw_image.squeeze()
+        maximum_pred_pos = numpy.unravel_index(raw_image.argmax(), raw_image.shape)
+
+        filtered = filters.gaussian(raw_image, sigma=10)
+
+        prediction = numpy.zeros_like(filtered)
+
+        if not numpy.all(filtered == 0):
+
+            threshold = filters.threshold_otsu(filtered)
+            filtered = filtered >= threshold
+
+            filtered = morphology.remove_small_holes(filtered, area_threshold=2500)
+            precise_label_boundary, num_labels = measure.label(filtered, return_num=True)
+            precise_label = measure.label(filtered)
+
+            if num_labels < 1:
+                continue
+            for j in range(1, num_labels + 1):
+                sorted_vertices = measure.find_contours((precise_label == j).astype(float), 0.5, fully_connected="high")
+                if sorted_vertices:
+                    for vertices in sorted_vertices:
+                        in_poly = measure.points_in_poly(numpy.array(maximum_pred_pos)[numpy.newaxis, :], vertices)
+                        if in_poly:
+                            # ax[2].imshow((precise_label == j).astype(int)[1 : -1, 1 : -1])
+                            prediction = (precise_label == j).astype(int)[1 : -1, 1 : -1]
+                            break
+            predictions.append(prediction)
+    return numpy.array(predictions)

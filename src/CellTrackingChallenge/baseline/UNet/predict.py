@@ -2,31 +2,26 @@
 import numpy
 import torch
 import os
-import shutil
-import time
-import pickle
 import json
 import glob
-import sys
 import h5py
 
 from matplotlib import pyplot
 from skimage import io
+from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from collections import defaultdict
 
 import loader
-import gradCAM
 
-from network import MICRANet
+from UNet import UNet
 
 class Predicter:
     """
     Class to make predictions on a set of images
     """
     def __init__(self, data_path, model_path, save_folder, cuda=False, size=512,
-                 supervision="1:5"):
+                 supervision="FS"):
         """
         Inits the predicter class
 
@@ -34,7 +29,6 @@ class Predicter:
         :param model_path: A file path to the model
         :param save_folder: A file path where to save the files
         :param cuda: Wheter to use cuda
-        :param supervision: A `str` of the level of supervision
         """
         # Assigns member variables
         self.data_path = data_path
@@ -54,64 +48,39 @@ class Predicter:
         """
         Predicts the data from the dataloader. Saves the output save_folder
         """
-        for i, (X) in enumerate(self.loader):
+        for i, (X) in enumerate(tqdm(self.loader)):
 
             if X.ndim == 3:
                 X = X.unsqueeze(1)
-
             if self.cuda:
                 X  = X.cuda()
 
-            # Computes the gradient class activation map
-            local_maps, pred = gradCAM.class_activation_map(self.model, X, cuda=self.cuda, size=X.shape[-1])
-            pred = pred >= self.class_thresholds
-
-            # Thresholds the class activation map
-            precise, raw_precise = gradCAM.segment_cam(local_maps, pred, X, size=X.shape[-1])
+            pred = self.model.forward(X)
+            pred = pred.cpu().data.numpy()
+            pred = numpy.argmax(pred, axis=1)
 
             self.save_images(i, X.cpu().numpy().squeeze(),
-                                local_maps, precise, raw_precise)
-
-    def classify(self):
-        """
-        Classifies the data from the dataloader. Saves the output to a json file
-        """
-        self.model.grad = False # We do not need the gradients in classification
-        output = {}
-        for i, (X) in tqdm(enumerate(self.loader)):
-
-            if X.ndim == 3:
-                X = X.unsqueeze(1)
-            if self.cuda:
-                X = X.cuda()
-
-            # Make the predictions
-            predictions = self.model.forward(X)
-
-            output[str(i)] = [(torch.sigmoid(predictions).cpu().data.numpy() >= self.class_thresholds).tolist()]
-
-        json.dump(output, open(os.path.join(self.save_folder, "predictions.json"), "w"), indent=4, sort_keys=True)
-        self.model.grad = True
+                                pred)
 
     def load_network(self):
         """
         Loads the model from model_path
         """
         net_params, trainer_params = self.load()
-        self.model = MICRANet(grad=True, **trainer_params)
+        self.model = UNet(**trainer_params)
+        if trainer_params["model_params"]["num_classes"] != 2:
+            self.model.conv_u0dscore = nn.Conv2d(in_channels=128, out_channels=trainer_params["model_params"]["num_classes"], kernel_size=3, padding=1)
         self.model.eval()
         self.model.load_state_dict(net_params)
         if self.cuda:
             self.model = self.model.cuda()
 
-    def save_images(self, batch, images, local_maps, precise, raw_precise):
+    def save_images(self, batch, images, precise):
         """
         Saves the images, masks, local maps, precise, coarse and predictions
         """
         io.imsave(os.path.join(self.save_folder, "{}_image.tif".format(batch)), images.astype(numpy.float32), check_contrast=False)
-        io.imsave(os.path.join(self.save_folder, "{}_localmap.tif".format(batch)), local_maps.astype(numpy.float32), check_contrast=False)
         io.imsave(os.path.join(self.save_folder, "{}_precise.tif".format(batch)), precise.astype(numpy.float32), check_contrast=False)
-        io.imsave(os.path.join(self.save_folder, "{}_rawprecise.tif".format(batch)), raw_precise.astype(numpy.float32), check_contrast=False)
 
     def load(self):
         """
@@ -119,10 +88,9 @@ class Predicter:
         """
         with h5py.File(self.model_path, "r") as file:
             networks = {}
-            for key, values in file["-".join(("MICRANet", self.supervision))].items():
+            for key, values in file["-".join(("UNet", self.supervision))].items():
                 networks[key] = {k : torch.tensor(v[()]) for k, v in values.items()}
-            trainer_params = json.loads(file["-".join(("MICRANet", self.supervision))].attrs["trainer_params"])
-            self.class_thresholds = numpy.array(file["-".join(("MICRANet", self.supervision))].attrs["class_thresholds"])
+            trainer_params = json.loads(file["-".join(("UNet", self.supervision))].attrs["trainer_params"])
         net_params = networks[key]
         return net_params, trainer_params
 
@@ -132,18 +100,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", action="store_true", default=False,
                         help="(optional) Wheter cuda can be used")
-    parser.add_argument("--supervision", type=str, default="1:5",
+    parser.add_argument("--supervision", type=str, default="FS",
                         help="(optional) Which supervision level to load")
     args = parser.parse_args()
 
-    available_supervision = ["2:1", "1:1", "1:2", "1:5", "1:8", "1:16"]
+    available_supervision = ["FS", "ALT2", "ALT5", "ALT10", "BBOX"]
     assert args.supervision in available_supervision, "The supervision level does not exists... Here's the valid list : [{}]".format(", ".join(available_supervision))
 
-    data_path = os.path.join(".", "data")
-    model_path = os.path.join(".", "MICRA-Net", "models", "EMModelZoo.hdf5")
+    data_path = os.path.join("..", "..", "data")
+    model_path = os.path.join("..", "..", "MICRA-Net", "models", "CTCModelZoo.hdf5")
     save_folder = os.path.join(".", "segmentation")
     os.makedirs(save_folder, exist_ok=True)
 
     predicter = Predicter(data_path, model_path, save_folder, cuda=args.cuda, supervision=args.supervision)
     predicter.predict()
-    predicter.classify()

@@ -1,3 +1,7 @@
+# Removes MICRA-Net folder and segementation folder
+MICRA-Net
+segmentation/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
