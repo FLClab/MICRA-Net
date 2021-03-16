@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<link href="css/github-css.css" rel="stylesheet"/>
+<meta charset="utf-8" content="text/html"/>
+<div class="gist">
+<style class="formula-style">
+        svg.gh-md-to-html-formula {
+            fill: black;
+        }
+    </style>
+<div class="gist-file"> <!-- This is the class that is responsible for the boxing! -->
+<div class="gist-data">
+<div class="js-gist-file-update-container js-task-list-container file-box">
+<div class="file" id="article-README">
+<div class="Box-body readme blob js-code-block-container p-5 p-xl-6" id="file-docker-image-pull-md-readme" style="margin-left: 40px; margin-right: 40px; margin-top: 20px; margin-bottom: 20px">
+<article class="markdown-body entry-content container-lg" itemprop="text">
+<h1>
+<a aria-hidden="true" class="anchor" href="#micra-net--visualization-app" id="user-content-micra-net--visualization-app"><span aria-hidden="true" class="octicon octicon-link"></span></a>MICRA-Net : Visualization app</h1>
+<p>This app is intended to provide the user with a tool to quickly visualize the predictions of MICRA-Net on a given dataset and play with the thresholds. This is not intended to batch process images or save the segmentation results.</p>
+<p>Here's a screen shot of the developed application. The application interface may vary depending on the OS.</p>
+<div align="center">
+<a href="/./app/images/app.png" rel="noopener noreferrer" target="_blank"><img data-canonical-src="/./app/images/app.png" src="/./app/images/app.png" style="max-width:100%; max-height: 1720px;" width="75%"/></a>
+</div>
+<h1>
+<a aria-hidden="true" class="anchor" href="#requirements" id="user-content-requirements"><span aria-hidden="true" class="octicon octicon-link"></span></a>Requirements</h1>
+<p>The application is built using <code>PyQt5</code> which is a large library. For this reason, the library is not included in the default requirements of the repository.</p>
+<p>To install the library, we however provide the user with a <code>requirements-wqt.txt</code> which contains the right version of <code>PyQt5</code> to install. The user may use pip install with the following options to install <code>PyQt5</code></p>
+<div class="highlight highlight-source-shell"><pre>pip install -r requirements-wqt.txt
+<span class="pl-c"><span class="pl-c">#</span> OR</span>
+pip install pyqt5</pre></div>
+<h1>
+<a aria-hidden="true" class="anchor" href="#documentation" id="user-content-documentation"><span aria-hidden="true" class="octicon octicon-link"></span></a>Documentation</h1>
+<p>In the following, it is assumed that the user launched the <code>main.py</code> file from the <code>src</code> folder.</p>
+<p>To launch the application, the user should navigate to the <code>app</code> folder of the MICRA-Net repository. Assuming that <code>PyQt5</code> is installed, the user may launch the application using</p>
+<div class="highlight highlight-source-shell"><pre>python main.py</pre></div>
+<p>The following documentation provides steps to segment an image from a pretrained model and the functionalities of the application.</p>
+<h2>
+<a aria-hidden="true" class="anchor" href="#segmentation" id="user-content-segmentation"><span aria-hidden="true" class="octicon octicon-link"></span></a>Segmentation</h2>
+<p>Here are the steps to infer an image from a model:</p>
+<ol>
+<li>
+<p>Load a model.</p>
+<p>Click on <code>File/Load Model</code> and select the desired <code>XZooModel.hdf5</code>. The models should be located within <code>~/Downloads/MICRA-Net/models</code>.</p>
+</li>
+<li>
+<p>Load an image.</p>
+<p>Click on <code>File/Load Image</code> and select the desired image. Some test images are provided within each <code>data</code> folder of the different datasets in the <code>src</code> directory</p>
+</li>
+<li>
+<p>Predict.</p>
+<p>Click on the <code>Predict</code> button.</p>
+</li>
+<li>
+<p>Change prediction class.</p>
+<p>Click on the <code>Class selector</code> dropdown button and select the desired class. Once the right class is selected, the user should be able to see the grad-CAMs of the different layers.</p>
+</li>
+<li>
+<p>Segment.</p>
+<p>Select the desired layers. An orange line should be visible after clicking on the image. Click on the <code>Update</code> button to visualize the flattening of grad-CAMs. In the <code>Threshold</code> tab, select the desired method. The percentile may be modified by using the provided slider.</p>
+</li>
+</ol>
+<h2>
+<a aria-hidden="true" class="anchor" href="#functionalities" id="user-content-functionalities"><span aria-hidden="true" class="octicon octicon-link"></span></a>Functionalities</h2>
+<h4>
+<a aria-hidden="true" class="anchor" href="#zoom-loaded-image" id="user-content-zoom-loaded-image"><span aria-hidden="true" class="octicon octicon-link"></span></a>Zoom loaded image</h4>
+<p>To zoom on the loaded image, the user should click on the image. An orange square should be visible within the image depending on the image size. The size of the orange square corresponds to the region which will be predicted by MICRA-Net.</p>
+<h4>
+<a aria-hidden="true" class="anchor" href="#zoom-grad-cams" id="user-content-zoom-grad-cams"><span aria-hidden="true" class="octicon octicon-link"></span></a>Zoom grad-CAMs</h4>
+<p>To zoom on the grad-CAMs, the user right-click the desired grad-CAM. This should open a popup window the user may resize appropriately.</p>
+<h4>
+<a aria-hidden="true" class="anchor" href="#change-prediction-coordinates" id="user-content-change-prediction-coordinates"><span aria-hidden="true" class="octicon octicon-link"></span></a>Change prediction coordinates</h4>
+<p>Following the click on the loaded image, the user may click on the popup image to change the coordinates of the prediction which are given by the orange square.</p>
+</article>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
