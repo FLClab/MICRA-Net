@@ -2,6 +2,8 @@
 
 The current repository contains the source code for the publication _MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task_.
 
+The datasets and models are available to download from the <a href="https://s3.valeria.science/flclab-micranet/index.html">MICRA-Net website</a>.
+
 The README is divided into the following sections
 - [Overview](#overview)
 - [Documentation](#documentation)
@@ -102,9 +104,9 @@ python train.py --dry-run
 
 ### Training from in-house data
 
-The provided training example in `src/Actin` contains all the necessary building blocks to train MICRA-Net for a different in-house dataset, provided that the user makes some minor modifications to the `HDF5Dataset` class. 
+The provided training example in `src/Actin` contains all the necessary building blocks to train MICRA-Net for a different in-house dataset, provided that the user makes some minor modifications to the `HDF5Dataset` class.
 
-The structure of the dataset should be the following 
+The structure of the dataset should be the following
 ```python
 "file" : {
     "group1" : {
