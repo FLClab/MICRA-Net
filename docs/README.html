@@ -1,0 +1,202 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<link href="css/github-css.css" rel="stylesheet"/>
+<meta charset="utf-8" content="text/html"/>
+<div class="gist">
+<style class="formula-style">
+        svg.gh-md-to-html-formula {
+            fill: black;
+        }
+    </style>
+<div class="gist-file"> <!-- This is the class that is responsible for the boxing! -->
+<div class="gist-data">
+<div class="js-gist-file-update-container js-task-list-container file-box">
+<div class="file" id="article-README">
+<div class="Box-body readme blob js-code-block-container p-5 p-xl-6" id="file-docker-image-pull-md-readme" style="margin-left: 40px; margin-right: 40px; margin-top: 20px; margin-bottom: 20px">
+<article class="markdown-body entry-content container-lg" itemprop="text">
+<h1>
+<a aria-hidden="true" class="anchor" href="#micra-net" id="user-content-micra-net"><span aria-hidden="true" class="octicon octicon-link"></span></a>MICRA-Net</h1>
+<p>The current repository contains the source code for the publication <em>MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task</em>.</p>
+<p>The datasets and models are available to download from the <a href="https://s3.valeria.science/flclab-micranet/index.html" rel="nofollow">MICRA-Net website</a>.</p>
+<p>The README is divided into the following sections</p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#documentation">Documentation</a></li>
+<li>
+<a href="#experiment">Experiment</a>
+<ul>
+<li><a href="#downloads">Downloads</a></li>
+<li><a href="#training">Training</a></li>
+<li><a href="#inference">Inference</a></li>
+</ul>
+</li>
+<li>
+<a href="#system-requirements">System requirements</a>
+<ul>
+<li><a href="#harware-requirements">Hardware requirements</a></li>
+<li>
+<a href="#software-requirements">Software requirements</a>
+<ul>
+<li><a href="#python-dependencies">Python dependencies</a></li>
+<li><a href="#installation-guide">Installation guide</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#citation">Citation</a></li>
+</ul>
+<p><a id="user-content-overview"></a></p>
+<h1>
+<a aria-hidden="true" class="anchor" href="#overview" id="user-content-overview"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h1>
+<p>High throughput quantitative analysis of microscopy images presents a challenge due to the complexity of the image content and the difficulty to retrieve precisely annotated datasets. In this repository we introduce a weakly-supervised MICRoscopy Analysis neural network (MICRA-Net) that can be trained on a simple main classification task using image-level annotations to solve multiple more complex auxiliary tasks, such as segmentation, detection, and enumeration.</p>
+<p>MICRA-Net relies on the latent information embedded within a trained model to achieve performances similar to state-of-the-art fully-supervised learning. This learnt information is extracted from the network using gradient class activation maps, which are combined to generate precise feature maps of the biological structures of interest.</p>
+<p><a id="user-content-documentation"></a></p>
+<h1>
+<a aria-hidden="true" class="anchor" href="#documentation" id="user-content-documentation"><span aria-hidden="true" class="octicon octicon-link"></span></a>Documentation</h1>
+<p>The source code is available to the users within the <code>src</code> folder. The subfolder contains the code developed for each of the datasets used in the paper.</p>
+<p>The provided scripts are all written in Python. Hence, the user should jump to jump to the <a href="#software-requirements">software requirements section</a> to validate/install the right version of Python and it's dependencies.</p>
+<p>Within the <code>src</code> folder, we provide the <code>main.py</code> file which allows the user to download the datasets from source and sets the proper symlinks for the following steps to the downloaded <code>MICRA-Net</code> folder.</p>
+<p>Each dataset folder contains at least :</p>
+<ul>
+<li>
+<code>data/</code> : Some images sampled from the testing set.</li>
+<li>
+<code>baseline/</code> : A folder containing the baselines and a <code>predict.py</code> file to infer on the same provided example images.</li>
+<li>
+<code>predict.py</code> : A script which can be used to infer the network on a subset of testing images.</li>
+<li>
+<code>network.py</code> : The MICRA-Net architecture in PyTorch.</li>
+</ul>
+<p>We provide an example of training MICRA-Net from an <code>hdf5</code> file in <code>src/Actin</code>. In the <code>src/Actin</code> folder, we also provide training examples for a U-Net and Mask R-CNN baselines. These training examples can serve as building blocks for training on a new dataset. See the <a href="#training">training section</a> below for a detailed procedure.</p>
+<p>To facilitate the inference on the testing images, we created a <code>predict.py</code> within each subfolders. Please refer to the <a href="#inference">inference section</a> below for a detailed procedure.</p>
+<p><a id="user-content-experiment"></a></p>
+<h1>
+<a aria-hidden="true" class="anchor" href="#experiment" id="user-content-experiment"><span aria-hidden="true" class="octicon octicon-link"></span></a>Experiment</h1>
+<p>In the following we provide the user with some steps to allow training and inference of images using the provided models.</p>
+<p><a id="user-content-downloads"></a></p>
+<h2>
+<a aria-hidden="true" class="anchor" href="#downloads" id="user-content-downloads"><span aria-hidden="true" class="octicon octicon-link"></span></a>Downloads</h2>
+<p>We provide a script <code>main.py</code> which allows to automatically download the models and data from source. Following the installation of Python (see <a href="#software-requirements">Software requirements</a>), the user may launch the script</p>
+<div class="highlight highlight-source-shell"><pre><span class="pl-c1">cd</span> src
+python main.py</pre></div>
+<p>This script downloads the models and datasets in the <code>~/Downloads/MICRA-Net</code> folder of the computer. This folder contains a <em>models</em> and a <em>datasets</em> folder.</p>
+<p><em>A more experienced user may download specific models and set the path accordingly within the folders.</em></p>
+<p><strong>NOTE.</strong> We intentionally removed the Ilastik models from the download to reduce the size of the downloaded folder. The Ilastik models can be downloaded from the following links <a href="https://s3.valeria.science/flclab-micranet/MICRA-Net/models-ilastik/ActinModelZoo-ilastik.hdf5" rel="nofollow">Actin</a> and <a href="https://s3.valeria.science/flclab-micranet/MICRA-Net/models-ilastik/CTCModelZoo-ilastik.hdf5" rel="nofollow">Cell Tracking Challenge</a>.</p>
+<p>The <em>models</em> folder contains each zoo models, where each zoo is composed of one instance of a trained model. The zoo models are <code>hdf5</code> files with the following file architecture</p>
+<div class="highlight highlight-source-python"><pre><span class="pl-s">"file"</span> : {
+    <span class="pl-s">"architecture1"</span> : {
+        <span class="pl-s">"model_name"</span> : {
+            <span class="pl-s">"weights_a"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>,
+            <span class="pl-s">"weights_b"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>
+        }
+    },
+    <span class="pl-s">"architecture2"</span> : {
+        <span class="pl-s">"model_name"</span> : {
+            <span class="pl-s">"weights_a"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>,
+            <span class="pl-s">"weights_b"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>
+        }
+    },
+    ...
+}</pre></div>
+<p>The <em>datasets</em> folder contains the F-actin dataset which is already split in training, validation, and testing.</p>
+<p><a id="user-content-training"></a></p>
+<h2>
+<a aria-hidden="true" class="anchor" href="#training" id="user-content-training"><span aria-hidden="true" class="octicon octicon-link"></span></a>Training</h2>
+<p>We provide a training example within the F-actin dataset folder using the downloaded datasets. To train MICRA-Net for one epoch use the following</p>
+<div class="highlight highlight-source-shell"><pre><span class="pl-c1">cd</span> src/Actin
+python train.py --dry-run</pre></div>
+<p>The <code>--dry-run</code> flag is used to test the training of the model. By default, the model will be saved in a <code>hdf5</code> file in the output folder (<code>~/Downloads/MICRA-Net/Results/dryrun/checkpoints.hdf5</code>). Training on a standard CPU (i7-7700) should require approximately 15 minutes per epoch.</p>
+<p>The same procedure may be applied to train the baseline models : U-Net and Mask R-CNN.</p>
+<div class="highlight highlight-source-shell"><pre><span class="pl-c1">cd</span> src/Actin/baseline/<span class="pl-k">&lt;</span>UNet OR MaskRCNN<span class="pl-k">&gt;</span>
+python train.py --dry-run</pre></div>
+<h3>
+<a aria-hidden="true" class="anchor" href="#training-from-in-house-data" id="user-content-training-from-in-house-data"><span aria-hidden="true" class="octicon octicon-link"></span></a>Training from in-house data</h3>
+<p>The provided training example in <code>src/Actin</code> contains all the necessary building blocks to train MICRA-Net for a different in-house dataset, provided that the user makes some minor modifications to the <code>HDF5Dataset</code> class.</p>
+<p>The structure of the dataset should be the following</p>
+<div class="highlight highlight-source-python"><pre><span class="pl-s">"file"</span> : {
+    <span class="pl-s">"group1"</span> : {
+        <span class="pl-s">"data"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>,
+        <span class="pl-s">"label"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>
+    },
+    <span class="pl-s">"group2"</span> : {
+        <span class="pl-s">"data"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>,
+        <span class="pl-s">"label"</span> : <span class="pl-s1">h5py</span>.<span class="pl-v">Dataset</span>
+    },
+    ...
+}</pre></div>
+<p><a id="user-content-inference"></a></p>
+<h2>
+<a aria-hidden="true" class="anchor" href="#inference" id="user-content-inference"><span aria-hidden="true" class="octicon octicon-link"></span></a>Inference</h2>
+<p>We provide a <code>predict.py</code> script for all provided models. In all cases, the script can be launched with the <code>--cuda</code> flag to increase the speed of computation. Navigate to the desired folder and launch the script</p>
+<div class="highlight highlight-source-shell"><pre><span class="pl-c1">cd</span> src/Actin
+python predict.py --cuda</pre></div>
+<p>This script will use the images provided within the <code>data/</code> folder and create a <code>segmentation/</code> folder containing all of the predictions.</p>
+<p>In some cases, the <code>predict.py</code> script can be called with a different supervision level (using the <code>--supervision [LEVEL]</code> flag). The user should refer to the provided script for specific details.</p>
+<p>The user may use the trained model obtained from <a href="#training">training</a> by changing the model path. Specifically, the line</p>
+<div class="highlight highlight-source-python"><pre><span class="pl-s1">model_path</span> <span class="pl-c1">=</span> <span class="pl-s1">os</span>.<span class="pl-s1">path</span>.<span class="pl-en">join</span>(<span class="pl-s">"."</span>, <span class="pl-s">"MICRA-Net"</span>, <span class="pl-s">"models"</span>, <span class="pl-s">"ActinModelZoo.hdf5"</span>)
+<span class="pl-c"># should be replaced by</span>
+<span class="pl-s1">model_path</span> <span class="pl-c1">=</span> <span class="pl-s1">os</span>.<span class="pl-s1">path</span>.<span class="pl-en">join</span>(<span class="pl-s">"."</span>, <span class="pl-s">"MICRA-Net"</span>, <span class="pl-s">"Results"</span>, <span class="pl-s">"dryrun"</span>, <span class="pl-s">"checkpoints.hdf5"</span>)</pre></div>
+<p>For the Ilastik models, we provided within the baseline folders a <code>convert.py</code> script. This script may be used to extract the Ilastik model from the <code>hdf5</code> file. We refer the user to the <a href="https://www.ilastik.org/" rel="nofollow">Ilastik website</a> to download the software and instructions on how to use it.</p>
+<p><a id="user-content-system-requirements"></a></p>
+<h1>
+<a aria-hidden="true" class="anchor" href="#system-requirements" id="user-content-system-requirements"><span aria-hidden="true" class="octicon octicon-link"></span></a>System requirements</h1>
+<p><a id="user-content-hardware-requirements"></a></p>
+<h2>
+<a aria-hidden="true" class="anchor" href="#hardware-requirements" id="user-content-hardware-requirements"><span aria-hidden="true" class="octicon octicon-link"></span></a>Hardware requirements</h2>
+<p>For inference, MICRA-Net requires a standard computer to run the scripts with sufficient RAM to load an image and network in memory.</p>
+<p>For training MICRA-Net and other baselines in the <code>Actin</code> folder, a minimum of 16G of available RAM is required to load the data in memory. It is strongly recommended to have a graphical processing unit (GPU). With the default parameters, the current memory necessary on the GPU is less than 12G. This can be reduced by lowering the <code>batch_size</code> parameters of the models.</p>
+<p><a id="user-content-software-requirements"></a></p>
+<h2>
+<a aria-hidden="true" class="anchor" href="#software-requirements" id="user-content-software-requirements"><span aria-hidden="true" class="octicon octicon-link"></span></a>Software requirements</h2>
+<p><a id="user-content-os-requirements"></a></p>
+<h3>
+<a aria-hidden="true" class="anchor" href="#os-requirements" id="user-content-os-requirements"><span aria-hidden="true" class="octicon octicon-link"></span></a>OS requirements</h3>
+<p>The source code was tested on macOS (10.15), Ubuntu (18.04 and 20.04), and Windows 10.</p>
+<p><a id="user-content-python-dependencies"></a></p>
+<h3>
+<a aria-hidden="true" class="anchor" href="#python-dependencies" id="user-content-python-dependencies"><span aria-hidden="true" class="octicon octicon-link"></span></a>Python dependencies</h3>
+<p>The source code <code>MICRA-Net</code> relies on Python scientific librairies. The source code was tested in a Python 3.7 environnement. We provide a <code>requirements.txt</code> file to facilitate the installation of the necessary dependencies.</p>
+<p><a id="user-content-installation-guide"></a></p>
+<h3>
+<a aria-hidden="true" class="anchor" href="#installation-guide" id="user-content-installation-guide"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation guide</h3>
+<p>Assuming the users have a working installation of Python on their computer (we recommend using <a href="https://docs.anaconda.com/anaconda/install/" rel="nofollow">Anaconda</a>), the users should create a new Python 3.7 environnement to avoid impacting on other file dependencies. The complete installation should be less than 15 minutes.</p>
+<div class="highlight highlight-source-shell"><pre>conda create -n micranet python=3.7
+conda activate micranet
+pip install -r requirements.txt</pre></div>
+<p><a id="user-content-citation"></a></p>
+<h1>
+<a aria-hidden="true" class="anchor" href="#citation" id="user-content-citation"><span aria-hidden="true" class="octicon octicon-link"></span></a>Citation</h1>
+<p>If you use any of the material provided within the repository, please cite the following paper.</p>
+<blockquote>
+<p>Bilodeau, A. et al. (2020) MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task.</p>
+</blockquote>
+<pre><code>@article{bilodeau2020,
+  title={MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task},
+  author={Bilodeau, Anthony and V.L. Delmas, Constantin and Parent, Martin and De Koninck, Paul and Durand, Audrey and Lavoie-Cardinal, Flavie},
+  journal={},
+  volume={},
+  number={},
+  pages={},
+  year={},
+  publisher={}
+}
+</code></pre>
+<h1>
+<a aria-hidden="true" class="anchor" href="#license" id="user-content-license"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h1>
+<p>License for Non-Commercial Use</p>
+<p>If this software is redistributed, this license must be included.
+The term software includes any source files, documentation, executables,
+models, and data.</p>
+<p>This software is available for general use by academic or non-profit,
+or government-sponsored researchers. This license does not grant the
+right to use this software or any derivation of it for commercial activities.
+For commercial use, please contact Flavie Lavoie-Cardinal at Université Laval
+at <a href="mailto:flavie.lavoie-cardinal@cervo.ulaval.ca">flavie.lavoie-cardinal@cervo.ulaval.ca</a></p>
+<p>This software comes with no warranty or guarantee of any kind. By using this
+software, the user accepts full liability.</p>
+</article>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
