@@ -481,7 +481,7 @@ if __name__ == "__main__":
 
     #######################################################
     #######################################################
-    # Converts the readme to HTML
+    # Converts the main readme to HTML
     #######################################################
     #######################################################
 
@@ -489,25 +489,47 @@ if __name__ == "__main__":
     import shutil
     import gh_md_to_html
 
-    if os.path.isdir("./css"):
-        shutil.rmtree("./css")
-    if os.path.isdir("./images"):
-        shutil.rmtree("./images")
-    if os.path.isfile("README.html"):
-        os.remove("README.html")
-
+    if os.path.isdir("./main"):
+        shutil.rmtree("./main")
     gh_md_to_html.main(
         md_origin="../README.md",
-        destination=".",
+        destination="./main",
         css_paths="css",
     )
 
     # Changes one line in the html file
-    with open("README.html", "r") as file:
+    with open("main/README.html", "r") as file:
         lines = file.readlines()
     lines[1] = '<link href="css/github-css.css" rel="stylesheet"/>\n'
-    with open("README.html", "w") as file:
+    with open("main/README.html", "w") as file:
         file.writelines(lines)
+
+    #######################################################
+    #######################################################
+    # Converts the app readme to HTML
+    #######################################################
+    #######################################################
+
+    import os
+    import shutil
+    import gh_md_to_html
+
+    if os.path.isdir("./app"):
+        shutil.rmtree("./css")
+
+    gh_md_to_html.main(
+        md_origin="../app/README.md",
+        destination="./app",
+        css_paths="css",
+    )
+
+    # Changes one line in the html file
+    with open("app/README.html", "r") as file:
+        lines = file.readlines()
+    lines[1] = '<link href="css/github-css.css" rel="stylesheet"/>\n'
+    with open("app/README.html", "w") as file:
+        file.writelines(lines)
+
 
     #######################################################
     #######################################################
