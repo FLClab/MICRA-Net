@@ -11,3 +11,4 @@ imagecodecs
 h5py
 requests
 pyqt5
+qimage2ndarray
