@@ -1,6 +1,6 @@
 # MICRA-Net
 
-The current repository contains the source code for the publication _MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task_.
+The current repository contains the source code for the publication _MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task_. A preprint version of the paper is available <a href="https://www.biorxiv.org/content/10.1101/2021.06.29.448970v1">here</a>.
 
 The datasets and models are available to download from the <a href="https://s3.valeria.science/flclab-micranet/index.html">MICRA-Net website</a>.
 
@@ -182,19 +182,21 @@ pip install -r requirements.txt
 
 If you use any of the material provided within the repository, please cite the following paper.
 
-> Bilodeau, A. et al. (2020) MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task.
+> _MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task_ Anthony Bilodeau, Constantin V.L. Delmas, Martin Parent, Paul De Koninck, Audrey Durand, Flavie Lavoie-Cardinal bioRxiv 2021.06.29.448970; doi: https://doi.org/10.1101/2021.06.29.448970
 
 ```
-@article{bilodeau2020,
-  title={MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task},
-  author={Bilodeau, Anthony and V.L. Delmas, Constantin and Parent, Martin and De Koninck, Paul and Durand, Audrey and Lavoie-Cardinal, Flavie},
-  journal={},
-  volume={},
-  number={},
-  pages={},
-  year={},
-  publisher={}
+@article {Bilodeau2021,
+	author = {Bilodeau, Anthony and Delmas, Constantin V.L. and Parent, Martin and De Koninck, Paul and Durand, Audrey and Lavoie-Cardinal, Flavie},
+	title = {MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task},
+	elocation-id = {2021.06.29.448970},
+	year = {2021},
+	doi = {10.1101/2021.06.29.448970},
+	publisher = {Cold Spring Harbor Laboratory},
+	URL = {https://www.biorxiv.org/content/early/2021/06/30/2021.06.29.448970},
+	eprint = {https://www.biorxiv.org/content/early/2021/06/30/2021.06.29.448970.full.pdf},
+	journal = {bioRxiv}
 }
+
 ```
 
 # License
