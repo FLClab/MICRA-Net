@@ -66,14 +66,14 @@ class HDF5Dataset(Dataset):
         group_name, k, j, i = self.samples[index]
 
         image_crop = self.cache[group_name]["data"][k, j : j + self.size, i : i + self.size]
-        label_crop = self.cache[group_name]["label"][k, :, j : j + self.size, i : i + self.size]
+        label_crop = self.cache[group_name]["label"][k, :-1, j : j + self.size, i : i + self.size]
 
         if image_crop.size != self.size*self.size:
             image_crop = numpy.pad(image_crop, ((0, self.size - image_crop.shape[0]), (0, self.size - image_crop.shape[1])), "constant")
             label_crop = numpy.pad(label_crop, ((0, 0), (0, self.size - label_crop.shape[1]), (0, self.size - label_crop.shape[2])), "constant")
 
         image = image_crop.astype(numpy.float32)
-        label = numpy.sum(label_crop, axis=(1, 2)) > (0.05 * self.size * self.size)
+        label = numpy.sum(label_crop > 0, axis=(1, 2)) > (0.05 * self.size * self.size)
 
         # Applies data augmentation
         if not self.validation:
