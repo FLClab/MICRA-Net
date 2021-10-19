@@ -95,7 +95,7 @@ class HDF5Dataset(Dataset):
                 gamma = numpy.clip(numpy.random.lognormal(0.005, numpy.sqrt(0.005)), 0, 1)
                 image = numpy.clip(image**gamma, 0, 1)
 
-        x = torch.tensor(image_crop, dtype=torch.float32)
+        x = torch.tensor(image, dtype=torch.float32)
         y = torch.tensor(label, dtype=torch.float32)
         return x, y
 
