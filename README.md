@@ -1,5 +1,7 @@
 # MICRA-Net
 
+[![DOI](https://zenodo.org/badge/307747246.svg)](https://zenodo.org/badge/latestdoi/307747246)
+
 The current repository contains the source code for the publication _MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task_. A preprint version of the paper is available <a href="https://www.biorxiv.org/content/10.1101/2021.06.29.448970v1">here</a>.
 
 The datasets and models are available to download from the <a href="https://s3.valeria.science/flclab-micranet/index.html">MICRA-Net website</a>.
