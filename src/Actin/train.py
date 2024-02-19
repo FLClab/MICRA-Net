@@ -15,6 +15,7 @@ from matplotlib import pyplot
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from collections import defaultdict
+from torch.utils.tensorboard import SummaryWriter
 
 import loader
 import network
@@ -132,6 +133,14 @@ if __name__ == "__main__":
                         help="Sets the default random seed")
     parser.add_argument("--num", type=int, default=1,
                         help="Sets the number of repetitions")
+    parser.add_argument("--cuda", action="store_true",
+                        help="(optional) activate cuda")
+    parser.add_argument("--restore-from", type=str, default=None,
+                        help="(optional) activate cuda")    
+    parser.add_argument("--freeze", action="store_true",
+                        help="(optional) freeze convolutional layers")    
+    parser.add_argument("--use-tensorboard", action="store_true",
+                        help="(optional) uses tensorboard for logging")
     args = parser.parse_args()
 
     PATH = "./MICRA-Net"
@@ -158,6 +167,8 @@ if __name__ == "__main__":
         current_datetime = datetime.datetime.today().strftime("%Y%m%d-%H%M%S")
         trainer_params = {
             "model_name" : "_".join((current_datetime, str(args.seed + add_to_seed))),
+            "restore-from" : args.restore_from,
+            "freeze" : args.freeze,
             "savefolder" : f"{PATH}/Results",
             "datetime" : current_datetime,
             "dry_run" : args.dry_run,
@@ -165,7 +176,7 @@ if __name__ == "__main__":
             "seed" : args.seed + add_to_seed,
             "lr" : lr,
             "epochs" : epochs,
-            "cuda" : torch.cuda.is_available(),
+            "cuda" : args.cuda and torch.cuda.is_available(),
             "data_aug" : 0.5,
             "step" : 0.75,
             "pos_weight" : pos_weight,
@@ -177,7 +188,7 @@ if __name__ == "__main__":
                 "num_workers" : 4,
                 "pin_memory" : True,
                 "drop_last" : True,
-                "batch_size" : 32,
+                "batch_size" : 64,
             },
             "model_params" : {
                 "num_classes" : 2,
@@ -197,6 +208,10 @@ if __name__ == "__main__":
         output_folder = create_savefolder(trainer_params, dry_run=trainer_params["dry_run"])
         json.dump(trainer_params, open(os.path.join(output_folder, "trainer_params.json"), "w"), indent=4, sort_keys=True)
 
+        # Tensorboard logging
+        if args.use_tensorboard:
+            writer = SummaryWriter(os.path.join(output_folder, "logs"))
+
         # Creation of the loaders
         train_dataset = loader.HDF5Dataset(trainer_params["hdf5_training_path"], **trainer_params)
         train_loader = DataLoader(train_dataset, **trainer_params["dataloader_params"])
@@ -204,6 +219,8 @@ if __name__ == "__main__":
         valid_loader = DataLoader(valid_dataset, **trainer_params["dataloader_params"])
 
         model = network.MICRANet(**trainer_params, **trainer_params["model_params"])
+        if trainer_params["restore-from"]:
+            model.restore_from(trainer_params["restore-from"], freeze_conv_layers=trainer_params["freeze"])
         if trainer_params["cuda"]:
             model = model.cuda()
 
@@ -219,7 +236,7 @@ if __name__ == "__main__":
             print("[----] Starting epoch {}/{}".format(epoch + 1, epochs))
 
             # Keep track of the loss of train and test
-            statLossTrain, statLossTest = [], []
+            statLossTrain, statLossTest = defaultdict(list), defaultdict(list)
 
             # Puts the model in training mode
             model.train()
@@ -240,7 +257,8 @@ if __name__ == "__main__":
                 loss = criterion(pred, y)
 
                 # Keeping track of statistics
-                statLossTrain.append(loss.item())
+                statLossTrain["loss"].append(loss.item())
+                statLossTrain["accuracy"].append(numpy.sum((y.cpu().data.numpy()>0).astype(int) * (pred.cpu().data.numpy()>=0.5).astype(int), axis=0) / len(y))
 
                 # Back-propagation and optimizer step
                 optimizer.zero_grad()
@@ -270,7 +288,8 @@ if __name__ == "__main__":
                 loss = criterion(pred, y)
 
                 # Keeping track of statistics
-                statLossTest.append(loss.item())
+                statLossTest["loss"].append(loss.item())
+                statLossTest["accuracy"].append(numpy.sum((y.cpu().data.numpy()>0).astype(int) * (pred.cpu().data.numpy()>=0.5).astype(int), axis=0) / len(y))
 
                 # To avoid memory leak
                 torch.cuda.empty_cache()
@@ -279,11 +298,27 @@ if __name__ == "__main__":
             # Aggregate stats
             for key, func in zip(("trainMean", "trainMed", "trainMin", "trainStd"),
                     (numpy.mean, numpy.median, numpy.min, numpy.std)):
-                stats[key].append(func(statLossTrain))
+                stats[key].append(func(statLossTrain["loss"]))
+                if args.use_tensorboard:
+                    writer.add_scalar(f"Loss/{key}", stats[key][-1], epoch)
             for key, func in zip(("testMean", "testMed", "testMin", "testStd"),
                     (numpy.mean, numpy.median, numpy.min, numpy.std)):
-                stats[key].append(func(statLossTest))
+                stats[key].append(func(statLossTest["loss"]))
+                if args.use_tensorboard:
+                    writer.add_scalar(f"Loss/{key}", stats[key][-1], epoch)
+            for key, func in zip(("trainAccMean", "trainAccMed", "trainAccMin", "trainAccStd"),
+                    (numpy.mean, numpy.median, numpy.min, numpy.std)):
+                stats[key].append(func(statLossTrain["accuracy"]))
+                if args.use_tensorboard:
+                    writer.add_scalar(f"Acc/{key}", stats[key][-1], epoch)
+            for key, func in zip(("testAccMean", "testAccMed", "testAccMin", "testAccStd"),
+                    (numpy.mean, numpy.median, numpy.min, numpy.std)):
+                stats[key].append(func(statLossTest["accuracy"]))
+                if args.use_tensorboard:
+                    writer.add_scalar(f"Acc/{key}", stats[key][-1], epoch)      
             stats["lr"].append(optimizer.param_groups[0]["lr"])
+            if args.use_tensorboard:
+                writer.add_scalar(f"lr", stats["lr"][-1], epoch)
             scheduler.step(numpy.min(stats["testMean"]))
 
             # Save if best model so far
@@ -299,6 +334,7 @@ if __name__ == "__main__":
 
             print("[----] Epoch {} done!".format(epoch + 1))
             print("[----]     Avg loss train/validation : {:0.4f} / {:0.4f}".format(stats["trainMean"][-1], stats["testMean"][-1]))
+            print("[----]     Avg accuracy train/validation : {:0.4f} / {:0.4f}".format(stats["trainAccMean"][-1], stats["testAccMean"][-1]))
             print("[----]     Current best model : {:0.4f}".format(min_valid_loss))
             print("[----]     Current learning rate : {:0.4e}".format(optimizer.param_groups[0]["lr"]))
             print("[----]     Took {} seconds".format(time.time() - start))

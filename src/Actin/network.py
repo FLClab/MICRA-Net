@@ -1,6 +1,9 @@
 
 import numpy
 import torch
+import os
+import h5py
+import json
 
 from torch import nn
 
@@ -42,6 +45,33 @@ class MICRANet(nn.Module):
 
         self.grads = {}
         self.outputs = {}
+
+    def restore_from(self, path, freeze_conv_layers=False):
+        """
+        Restores model weights from path
+
+        :param path: A `str` of the path
+        """
+        ext = os.path.splitext(path)[-1]
+        if ext in [".h5", ".hfd5"]:
+            with h5py.File(path, "r") as file:
+                networks = {}
+                for key, values in file["MICRANet"].items():
+                    networks[key] = {k : torch.tensor(v[()]) for k, v in values.items()}
+                trainer_params = json.loads(file["MICRANet"].attrs["trainer_params"])
+            net_params = networks[key]
+            super().load_state_dict(net_params, strict=False)
+        elif ext in [".pt", ".pth"]:
+            ckpt = torch.load(path, map_location="cpu")
+            net_params = ckpt["model"]["backbone"]
+            super().load_state_dict(net_params, strict=False)
+        else:
+            raise NotImplementedError(f"`{ext}` is not a valid checkpoint.")
+
+        if freeze_conv_layers:
+            for key, param in self.named_parameters():
+                if not "linear1" in key:
+                    param.requires_grad = False
 
     def forward(self, x):
         """
