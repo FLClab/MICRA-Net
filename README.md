@@ -184,21 +184,19 @@ pip install -r requirements.txt
 
 If you use any of the material provided within the repository, please cite the following paper.
 
-> _MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task_ Anthony Bilodeau, Constantin V.L. Delmas, Martin Parent, Paul De Koninck, Audrey Durand, Flavie Lavoie-Cardinal bioRxiv 2021.06.29.448970; doi: https://doi.org/10.1101/2021.06.29.448970
+> Bilodeau, A., Delmas, C.V.L., Parent, M. et al. Microscopy analysis neural network to solve detection, enumeration and segmentation from image-level annotations. Nat Mach Intell 4, 455–466 (2022). https://doi.org/10.1038/s42256-022-00472-w
 
 ```
-@article {Bilodeau2021,
-	author = {Bilodeau, Anthony and Delmas, Constantin V.L. and Parent, Martin and De Koninck, Paul and Durand, Audrey and Lavoie-Cardinal, Flavie},
-	title = {MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task},
-	elocation-id = {2021.06.29.448970},
-	year = {2021},
-	doi = {10.1101/2021.06.29.448970},
-	publisher = {Cold Spring Harbor Laboratory},
-	URL = {https://www.biorxiv.org/content/early/2021/06/30/2021.06.29.448970},
-	eprint = {https://www.biorxiv.org/content/early/2021/06/30/2021.06.29.448970.full.pdf},
-	journal = {bioRxiv}
+@article{bilodeau2022microscopy,
+  title={Microscopy analysis neural network to solve detection, enumeration and segmentation from image-level annotations},
+  author={Bilodeau, Anthony and Delmas, Constantin VL and Parent, Martin and De Koninck, Paul and Durand, Audrey and Lavoie-Cardinal, Flavie},
+  journal={Nature Machine Intelligence},
+  volume={4},
+  number={5},
+  pages={455--466},
+  year={2022},
+  publisher={Nature Publishing Group UK London}
 }
-
 ```
 
 # License
