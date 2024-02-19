@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/307747246.svg)](https://zenodo.org/badge/latestdoi/307747246)
 
-The current repository contains the source code for the publication _MICRA-Net: MICRoscopy Analysis Neural Network to solve detection, classification, and segmentation from a single simple auxiliary task_. A preprint version of the paper is available <a href="https://www.nature.com/articles/s42256-022-00472-w">here</a>.
+The current repository contains the source code for the publication _Microscopy analysis neural network to solve detection, enumeration and segmentation from image-level annotations_. A preprint version of the paper is available <a href="https://www.nature.com/articles/s42256-022-00472-w">here</a>.
 
 The datasets and models are available to download from the <a href="https://s3.valeria.science/flclab-micranet/index.html">MICRA-Net website</a>.
 
